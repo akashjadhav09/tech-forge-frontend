@@ -1,11 +1,34 @@
-import PostTags from "../components/blog/PostTags"
-import PostCard from "../components/blog/PostCard"
-import { useAuth } from "../contexts/AuthContext"
-import { useNavigate } from "react-router-dom"
+import { useEffect, useState } from "react";
+import PostTags from "../components/blog/PostTags";
+import PostCard from "../components/blog/PostCard";
+import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { getAllBlogs } from "../api/blog.api";
 
 export default function HomePage() {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const [blogs, setBlogs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [selectedTag, setSelectedTag] = useState(null);
+
+    useEffect(() => {
+        const fetchPosts = async () => {
+            try {
+                const res = await getAllBlogs();
+                const data = res.data.posts;
+                setBlogs(Array.isArray(data) ? data : []);
+            } catch (err) {
+                console.error(err);
+                setError("Failed to fetch blogs.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPosts();
+    }, []);
 
     const handleExploreClick = () => {
         if (!user) {
@@ -15,50 +38,55 @@ export default function HomePage() {
         }
     };
 
-    const posts = [
-        {
-            image:
-                "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
-            tag: "Travel",
-            title: "What Traveling Greece For 2 Weeks Taught Me About Life",
-            date: "Jun 21, 2021",
-            readTime: "11 min read",
-            description:
-                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Diam mollis Lorem ipsum dolor sit amet, consectetur adipiscing elit. Diam mollis Lorem ipsum dolor sit amet, consectetur adipiscing elit. Diam mollis",
-        },
-        {
-            image:
-                "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
-            tag: "Travel",
-            title: "What Traveling Greece For 2 Weeks Taught Me About Life",
-            date: "Jun 21, 2021",
-            readTime: "11 min read",
-            description:
-                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Diam mollis Lorem ipsum dolor sit amet, consectetur adipiscing elit. Diam mollis Lorem ipsum dolor sit amet, consectetur adipiscing elit. Diam mollis",
-        },
-        {
-            image:
-                "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
-            tag: "Travel",
-            title: "What Traveling Greece For 2 Weeks Taught Me About Life",
-            date: "Jun 21, 2021",
-            readTime: "11 min read",
-            description:
-                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Diam mollis Lorem ipsum dolor sit amet, consectetur adipiscing elit. Diam mollis Lorem ipsum dolor sit amet, consectetur adipiscing elit. Diam mollis",
+    // Extract unique tags from all blogs
+    const allTags = blogs.reduce((tags, blog) => {
+        if (Array.isArray(blog.tags)) {
+            blog.tags.forEach(tag => {
+                if (!tags.includes(tag)) {
+                    tags.push(tag);
+                }
+            });
         }
-    ];
+        return tags;
+    }, []);
+
+    // Filter blogs by selected tag
+    const filteredBlogs = selectedTag
+        ? blogs.filter(blog => Array.isArray(blog.tags) && blog.tags.includes(selectedTag))
+        : blogs;
+
+    // Show only first 3 posts on homepage
+    const posts = filteredBlogs.slice(0, 3);
+
     return (
         <div className="main-content-wrapper">
             <div className="tags-wrapper flex items-center justify-center gap-4">
-                <PostTags />
+                <PostTags
+                    tags={allTags}
+                    selectedTag={selectedTag}
+                    onTagSelect={setSelectedTag}
+                />
             </div>
 
             <div className="max-w-7xl mx-auto px-4 py-10">
-                <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-                    {posts.map((post, index) => (
-                        <PostCard key={index} {...post} />
-                    ))}
-                </div>
+                {loading && <div className="text-center py-10">Loading blogs...</div>}
+                {error && <div className="text-center py-10 text-red-500">Error: {error}</div>}
+
+                {!loading && !error && (
+                    <>
+                        {posts.length === 0 ? (
+                            <div className="text-center text-gray-500">
+                                {selectedTag ? `No blogs found with tag "${selectedTag}"` : 'No blogs found.'}
+                            </div>
+                        ) : (
+                            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                                {posts.map((post, index) => (
+                                    <PostCard key={post._id || index} {...post} />
+                                ))}
+                            </div>
+                        )}
+                    </>
+                )}
             </div>
 
             <div className="pb-6 border-t border-gray-100 flex items-center justify-center">
@@ -71,5 +99,5 @@ export default function HomePage() {
                 </button>
             </div>
         </div>
-    )
+    );
 }

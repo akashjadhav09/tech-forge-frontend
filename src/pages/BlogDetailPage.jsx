@@ -1,41 +1,63 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { getBlogById } from '../api/blog.api';
 
 export default function BlogDetailPage() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
 
-    // Mock Data for the single post (In real app, fetch based on ID)
-    const [post] = useState({
-        id: id,
-        title: "The Future of Artificial Intelligence in Healthcare",
-        image: "https://images.unsplash.com/photo-1499750310159-5254f4cc1555?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-        author: "Dr. Sarah Mitchell",
-        date: "Feb 02, 2026",
-        readTime: "5 min read",
-        content: `
-            <p class="mb-4">Artificial Intelligence (AI) is rapidly transforming the landscape of healthcare, promising to revolutionize how we diagnose, treat, and monitor patients. From predictive analytics to personalized medicine, the integration of AI tools is not just a futuristic concept but a present-day reality.</p>
-            <h3 class="text-xl font-bold mb-2">The Rise of Precision Medicine</h3>
-            <p class="mb-4">One of the most significant impacts of AI is in precision medicine. By analyzing vast amounts of genetic data, AI algorithms can identify patterns that humans might miss, leading to earlier detection of diseases like cancer and heart conditions.</p>
-            <p>As we continue to develop these technologies, ethical considerations regarding patient privacy and data security remain paramount. However, the potential benefits for global health are undeniable.</p>
-        `,
-        tags: ["Technology", "Healthcare", "AI"]
-    });
+    const [post, setPost] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Interaction States
+    // Interaction States - MUST be declared before any early returns
     const [likes, setLikes] = useState(42);
     const [dislikes, setDislikes] = useState(3);
     const [userAction, setUserAction] = useState(null); // 'like', 'dislike', or null
 
-    // Comments State
+    // Comments State - MUST be declared before any early returns
     const [comments, setComments] = useState([
         { id: 1, user: "John Doe", text: "Great article! Really insightful.", date: "2026-02-02", isEditing: false },
         { id: 2, user: "Jane Smith", text: "I wonder how this affects rural hospitals?", date: "2026-02-03", isEditing: false }
     ]);
     const [newComment, setNewComment] = useState("");
     const [editCommentText, setEditCommentText] = useState("");
+
+    useEffect(() => {
+        const fetchBlog = async () => {
+            if (!id) return;
+            try {
+                setLoading(true);
+                const res = await getBlogById(id);
+                setPost(res.data.post || res.data.data || res.data);
+            } catch (err) {
+                console.error(err);
+                setError("Failed to load blog.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchBlog();
+    }, [id]);
+
+    // Update browser tab title when post is loaded
+    useEffect(() => {
+        if (post?.title) {
+            document.title = `${post.title} | TechForge`;
+        }
+
+        // Cleanup: reset title when component unmounts
+        return () => {
+            document.title = 'TechForge';
+        };
+    }, [post]);
+
+    if (loading) return <div className="text-center py-20">Loading...</div>;
+    if (error) return <div className="text-center py-20 text-red-500">Error: {error}</div>;
+    if (!post) return <div className="text-center py-20">Blog not found</div>;
 
     // --- Handlers ---
 
@@ -121,7 +143,7 @@ export default function BlogDetailPage() {
                 <div className="h-96 w-full overflow-hidden relative">
                     <div className="absolute inset-0 bg-black/20 z-10" />
                     <img
-                        src={post.image}
+                        src={post.coverImage ? (post.coverImage.startsWith('http') ? post.coverImage : `${import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:3000'}/${post.coverImage}`) : post.image}
                         alt={post.title}
                         className="w-full h-full object-cover"
                     />
@@ -137,11 +159,11 @@ export default function BlogDetailPage() {
                             {post.title}
                         </h1>
                         <div className="flex items-center text-sm font-medium text-gray-200">
-                            <span>By {post.author}</span>
+                            <span>By {post.author?.name || post.author}</span>
                             <span className="mx-2">•</span>
-                            <span>{post.date}</span>
+                            <span>{new Date(post.createdAt || post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                             <span className="mx-2">•</span>
-                            <span>{post.readTime}</span>
+                            <span>{post.views || 0} views</span>
                         </div>
                     </div>
                 </div>
