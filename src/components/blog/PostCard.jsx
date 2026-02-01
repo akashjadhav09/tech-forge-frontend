@@ -1,4 +1,7 @@
+import { Link } from "react-router-dom";
+
 export default function PostCard({
+    id = 1, // Defaulting to 1 for demo purposes
     image,
     tag,
     title,
@@ -7,15 +10,15 @@ export default function PostCard({
     description,
 }) {
     return (
-        <div className="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer">
+        <div className="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300">
             {/* Image */}
-            <div className="overflow-hidden">
+            <Link to={`/blogs/${id}`} className="overflow-hidden block">
                 <img
                     src={image}
                     alt={title}
                     className="h-56 w-full object-cover transform group-hover:scale-105 transition-transform duration-500"
                 />
-            </div>
+            </Link>
 
             {/* Content */}
             <div className="p-5">
@@ -23,9 +26,11 @@ export default function PostCard({
                     {tag}
                 </span>
 
-                <h2 className="text-lg font-bold leading-snug mt-2 mb-2 group-hover:text-blue-900 transition-colors">
-                    {title}
-                </h2>
+                <Link to={`/blogs/${id}`}>
+                    <h2 className="text-lg font-bold leading-snug mt-2 mb-2 group-hover:text-blue-900 transition-colors">
+                        {title}
+                    </h2>
+                </Link>
 
                 <p className="text-sm text-gray-500 mb-3">
                     {date} · {readTime}

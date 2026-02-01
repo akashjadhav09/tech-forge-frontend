@@ -4,7 +4,7 @@ export default function Footer() {
     return (
         <footer className="bg-gray-900 text-white border-t border-gray-800">
             <div className="max-w-7xl mx-auto py-12 px-4 overflow-hidden sm:px-6 lg:px-8">
-                <div className="flex justify-center space-x-6">
+                <div className="flex flex-wrap justify-center gap-6 md:gap-8">
                     <Link to="/home" className="text-gray-300 hover:text-primary transition-colors">
                         Home
                     </Link>

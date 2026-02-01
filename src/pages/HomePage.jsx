@@ -1,7 +1,20 @@
 import PostTags from "../components/blog/PostTags"
 import PostCard from "../components/blog/PostCard"
+import { useAuth } from "../contexts/AuthContext"
+import { useNavigate } from "react-router-dom"
 
 export default function HomePage() {
+    const { user } = useAuth();
+    const navigate = useNavigate();
+
+    const handleExploreClick = () => {
+        if (!user) {
+            navigate('/login');
+        } else {
+            navigate('/blogs');
+        }
+    };
+
     const posts = [
         {
             image:
@@ -50,10 +63,11 @@ export default function HomePage() {
 
             <div className="pb-6 border-t border-gray-100 flex items-center justify-center">
                 <button
-                    type="submit"
+                    onClick={handleExploreClick}
+                    type="button"
                     className="px-6 py-2.5 bg-primary border border-transparent rounded-lg text-white font-medium hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary shadow-lg shadow-primary/30 transition-all hover:scale-[1.02] cursor-pointer"
                 >
-                    Click to explore more
+                    Explore more
                 </button>
             </div>
         </div>

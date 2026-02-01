@@ -8,20 +8,27 @@ import HomePage from "./pages/HomePage";
 import ContactPage from "./pages/ContactPage";
 import WritePostPage from "./pages/WritePostPage";
 
+import { AuthProvider } from "./contexts/AuthContext";
+import ExploreBlogsPage from "./pages/ExploreBlogsPage";
+import BlogDetailPage from "./pages/BlogDetailPage";
+
 function App() {
   return (
     <div className="">
-      <Routes>
-        <Route element={<MainLayout />}>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/writeablog" element={<WritePostPage />} />
-        </Route>
+      <AuthProvider>
+        <Routes>
+          <Route element={<MainLayout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/blogs" element={<ExploreBlogsPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/writeablog" element={<WritePostPage />} />
+          </Route>
 
-        <Route path="/login" element={<LoginForm />} />
-        <Route path="/register" element={<RegisterForm />} />
-      </Routes>
+          <Route path="/login" element={<LoginForm />} />
+          <Route path="/register" element={<RegisterForm />} />
+        </Routes>
+      </AuthProvider>
     </div>
   )
 }
