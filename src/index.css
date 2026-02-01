@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #9D4EDD;
+  --color-primary-hover: #7b3cbd;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
