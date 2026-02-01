@@ -1,6 +1,43 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { registerUser } from '../../api/auth.api';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function RegisterForm() {
+    const navigate = useNavigate();
+    const { login } = useAuth();
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const name = e.target.name.value;
+            const email = e.target.email.value;
+            const password = e.target.password.value;
+            const confirmPassword = e.target.confirmPassword.value;
+
+            console.log(name, email, password, confirmPassword);
+
+            if (password !== confirmPassword) {
+                alert("Passwords do not match");
+                return;
+            }
+
+            const res = await registerUser({
+                name: name,
+                email: email,
+                password: password,
+            });
+
+            // Use context login to update global state
+            await login(res.data.token);
+
+            alert("Registration success");
+            navigate('/home');
+        } catch (err) {
+            console.log(err);
+            alert(err.response?.data?.message || "Registration failed");
+        }
+    }
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg border border-gray-100">
@@ -12,7 +49,7 @@ export default function RegisterForm() {
                         Join our community today
                     </p>
                 </div>
-                <form className="mt-8 space-y-6">
+                <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
                     <div className="space-y-4">
                         <div>
                             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
@@ -62,7 +99,7 @@ export default function RegisterForm() {
                             </label>
                             <input
                                 id="confirm-password"
-                                name="confirm-password"
+                                name="confirmPassword"
                                 type="password"
                                 autoComplete="new-password"
                                 required

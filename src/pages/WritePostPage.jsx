@@ -1,10 +1,15 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { createBlog } from '../api/blog.api';
 
 export default function WritePostPage() {
     const [title, setTitle] = useState('');
+    const [tags, setTags] = useState('');
     const [coverImage, setCoverImage] = useState(null);
     const [coverImagePreview, setCoverImagePreview] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const editorRef = useRef(null);
+    const navigate = useNavigate();
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
@@ -19,24 +24,60 @@ export default function WritePostPage() {
         editorRef.current.focus();
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
+    const handleSubmit = async (status) => {
+        if (isSubmitting) return;
+
         // Get HTML content from the contentEditable div
         const htmlContent = editorRef.current.innerHTML;
 
-        console.log({
-            title,
-            content: htmlContent,
-            coverImage
-        });
-        alert("Post data logged to console! (API integration pending)");
+        if (!title.trim() || !htmlContent.trim()) {
+            alert("Please provide a title and content.");
+            return;
+        }
+
+        try {
+            setIsSubmitting(true);
+            const tagsArray = tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+
+            // Use FormData if image is present, otherwise use JSON
+            if (coverImage) {
+                const formData = new FormData();
+                formData.append('title', title);
+                formData.append('content', htmlContent);
+                formData.append('status', status);
+                formData.append('coverImage', coverImage);
+
+                // Append tags as array
+                tagsArray.forEach(tag => formData.append('tags', tag));
+
+                await createBlog(formData);
+            } else {
+                // JSON payload for text-only posts
+                const payload = {
+                    title,
+                    content: htmlContent,
+                    status,
+                    tags: tagsArray
+                };
+
+                await createBlog(payload);
+            }
+
+            alert(`Post ${status === 'published' ? 'published' : 'saved as draft'} successfully!`);
+            navigate('/blogs');
+        } catch (error) {
+            console.error("Failed to save post:", error);
+            alert("Failed to save post. See console for details.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-4xl mx-auto">
                 <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
-                    <form onSubmit={handleSubmit} className="p-8 space-y-8">
+                    <div className="p-8 space-y-8">
 
                         {/* Header */}
                         <div className="border-b border-gray-100 pb-6">
@@ -94,6 +135,19 @@ export default function WritePostPage() {
                             />
                         </div>
 
+                        {/* Tags Input */}
+                        <div className="space-y-2">
+                            <label htmlFor="tags" className="block text-sm font-medium text-gray-700">Tags</label>
+                            <input
+                                type="text"
+                                id="tags"
+                                value={tags}
+                                onChange={(e) => setTags(e.target.value)}
+                                placeholder="Enter tags separated by commas (e.g., tech, ai, health)..."
+                                className="block w-full px-4 py-3 border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary placeholder-gray-400 transition-colors"
+                            />
+                        </div>
+
                         {/* Editor Section */}
                         <div className="space-y-2">
                             <label className="block text-sm font-medium text-gray-700">Content</label>
@@ -132,19 +186,23 @@ export default function WritePostPage() {
                         <div className="pt-6 border-t border-gray-100 flex items-center justify-end gap-4">
                             <button
                                 type="button"
-                                className="px-6 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors"
+                                onClick={() => handleSubmit('draft')}
+                                disabled={isSubmitting}
+                                className={`px-6 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
-                                Save Draft
+                                {isSubmitting ? 'Saving...' : 'Save Draft'}
                             </button>
                             <button
-                                type="submit"
-                                className="px-6 py-2.5 bg-primary border border-transparent rounded-lg text-white font-medium hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary shadow-lg shadow-primary/30 transition-all hover:scale-[1.02]"
+                                type="button"
+                                onClick={() => handleSubmit('published')}
+                                disabled={isSubmitting}
+                                className={`px-6 py-2.5 bg-primary border border-transparent rounded-lg text-white font-medium hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary shadow-lg shadow-primary/30 transition-all hover:scale-[1.02] ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
-                                Publish Post
+                                {isSubmitting ? 'Publishing...' : 'Publish Post'}
                             </button>
                         </div>
 
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>

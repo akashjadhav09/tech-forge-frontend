@@ -7,10 +7,12 @@ import RegisterForm from "./components/auth/RegisterForm";
 import HomePage from "./pages/HomePage";
 import ContactPage from "./pages/ContactPage";
 import WritePostPage from "./pages/WritePostPage";
+import MyBlogsPage from "./pages/MyBlogsPage";
 
 import { AuthProvider } from "./contexts/AuthContext";
 import ExploreBlogsPage from "./pages/ExploreBlogsPage";
 import BlogDetailPage from "./pages/BlogDetailPage";
+import ProfilePage from "./pages/ProfilePage";
 
 function App() {
   return (
@@ -21,7 +23,10 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/home" element={<HomePage />} />
             <Route path="/blogs" element={<ExploreBlogsPage />} />
+            <Route path="/blogs/:id" element={<BlogDetailPage />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/my-blogs" element={<MyBlogsPage />} />
             <Route path="/writeablog" element={<WritePostPage />} />
           </Route>
 
