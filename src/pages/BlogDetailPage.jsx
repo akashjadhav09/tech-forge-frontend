@@ -200,15 +200,15 @@ export default function BlogDetailPage() {
                         {/* Add Comment */}
                         <form onSubmit={handleAddComment} className="mb-10">
                             <div className="flex gap-4">
-                                <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                                <div className="shrink-0 h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
                                     {user ? user.name.charAt(0) : '?'}
                                 </div>
-                                <div className="flex-grow">
+                                <div className="grow">
                                     <textarea
                                         value={newComment}
                                         onChange={(e) => setNewComment(e.target.value)}
                                         placeholder={user ? "Add to the discussion..." : "Login to comment..."}
-                                        className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-y min-h-[100px]"
+                                        className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-y min-h-25"
                                         disabled={!user}
                                     />
                                     <div className="mt-2 flex justify-end">
@@ -228,10 +228,10 @@ export default function BlogDetailPage() {
                         <div className="space-y-8">
                             {comments.map(comment => (
                                 <div key={comment.id} className="flex gap-4 group">
-                                    <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold">
+                                    <div className="shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold">
                                         {comment.user.charAt(0)}
                                     </div>
-                                    <div className="flex-grow">
+                                    <div className="grow">
                                         <div className="bg-gray-50 p-4 rounded-xl rounded-tl-none">
                                             <div className="flex justify-between items-start mb-2">
                                                 <div>
