@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getBlogById } from '../api/blog.api';
+import { getCommentsAsPerBlog, createComment, updateComment, deleteComment } from '../api/comment.api';
 
 export default function BlogDetailPage() {
     const { id } = useParams();
@@ -18,10 +19,7 @@ export default function BlogDetailPage() {
     const [userAction, setUserAction] = useState(null); // 'like', 'dislike', or null
 
     // Comments State - MUST be declared before any early returns
-    const [comments, setComments] = useState([
-        { id: 1, user: "John Doe", text: "Great article! Really insightful.", date: "2026-02-02", isEditing: false },
-        { id: 2, user: "Jane Smith", text: "I wonder how this affects rural hospitals?", date: "2026-02-03", isEditing: false }
-    ]);
+    const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState("");
     const [editCommentText, setEditCommentText] = useState("");
 
@@ -54,6 +52,24 @@ export default function BlogDetailPage() {
             document.title = 'TechForge';
         };
     }, [post]);
+
+    useEffect(() => {
+        const fetchComments = async () => {
+            if (!id) return;
+            try {
+                setLoading(true);
+                const res = await getCommentsAsPerBlog(id);
+                setComments(res);
+            } catch (err) {
+                console.error(err);
+                setError("Failed to load comments.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchComments();
+    }, [id]);
 
     if (loading) return <div className="text-center py-20">Loading...</div>;
     if (error) return <div className="text-center py-20 text-red-500">Error: {error}</div>;
@@ -91,49 +107,81 @@ export default function BlogDetailPage() {
         }
     };
 
-    const handleAddComment = (e) => {
+    const handleAddComment = async (e) => {
         e.preventDefault();
         if (!user) return navigate('/login');
         if (!newComment.trim()) return;
 
+        const tempId = Date.now().toString();
         const comment = {
-            id: Date.now(),
-            user: user.name || "Anonymous", // Fallback if name missing
-            text: newComment,
-            date: new Date().toISOString().split('T')[0],
+            _id: tempId,
+            author: {
+                _id: user._id || tempId,
+                name: user.name || "Anonymous",
+                email: user.email || ""
+            },
+            content: newComment,
+            createdAt: new Date().toISOString(),
             isEditing: false
         };
 
-        setComments([...comments, comment]);
+        setComments(prev => [...prev, comment]);
+        const contentToSave = newComment;
         setNewComment("");
-    };
 
-    const handleDeleteComment = (commentId) => {
-        setComments(comments.filter(c => c.id !== commentId));
+        try {
+            const createdRes = await createComment(id, { content: contentToSave });
+            const realComment = createdRes.comment || createdRes.data || createdRes;
+
+            setComments(current => current.map(c =>
+                c._id === tempId ? { ...realComment, isEditing: false } : c
+            ));
+        } catch (error) {
+            console.error("Failed to create comment", error);
+        }
     };
 
     const handleEditClick = (comment) => {
         const updatedComments = comments.map(c =>
-            c.id === comment.id ? { ...c, isEditing: true } : c
+            c._id === comment._id ? { ...c, isEditing: true } : c
         );
         setComments(updatedComments);
-        setEditCommentText(comment.text);
+        setEditCommentText(comment.content);
     };
 
-    const handleSaveEdit = (commentId) => {
+    const handleSaveEdit = async (commentId) => {
         const updatedComments = comments.map(c =>
-            c.id === commentId ? { ...c, text: editCommentText, isEditing: false } : c
+            c._id === commentId ? { ...c, content: editCommentText, isEditing: false } : c
         );
         setComments(updatedComments);
+        const textToSave = editCommentText;
         setEditCommentText("");
+
+        try {
+            const updatedRes = await updateComment(id, commentId, { content: textToSave });
+            const realComment = updatedRes.comment || updatedRes.data || updatedRes;
+
+            if (realComment && realComment._id) {
+                setComments(current => current.map(c =>
+                    c._id === commentId ? { ...realComment, isEditing: false } : c
+                ));
+            }
+        } catch (error) {
+            console.error("Failed to update comment", error);
+        }
     };
 
     const handleCancelEdit = (commentId) => {
         const updatedComments = comments.map(c =>
-            c.id === commentId ? { ...c, isEditing: false } : c
+            c._id === commentId ? { ...c, isEditing: false } : c
         );
         setComments(updatedComments);
         setEditCommentText("");
+    };
+
+    const handleDeleteComment = (commentId) => {
+        setComments(comments.filter(c => c._id !== commentId));
+        deleteComment(id, commentId);
     };
 
     return (
@@ -161,7 +209,7 @@ export default function BlogDetailPage() {
                         <div className="flex items-center text-sm font-medium text-gray-200">
                             <span>By {post.author?.name || post.author}</span>
                             <span className="mx-2">•</span>
-                            <span>{new Date(post.createdAt || post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                            <span>{new Date(post.createdAt || post.date).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}</span>
                             <span className="mx-2">•</span>
                             <span>{post.views || 0} views</span>
                         </div>
@@ -227,20 +275,22 @@ export default function BlogDetailPage() {
                         {/* Comments List */}
                         <div className="space-y-8">
                             {comments.map(comment => (
-                                <div key={comment.id} className="flex gap-4 group">
+                                <div key={comment._id} className="flex gap-4 group">
                                     <div className="shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold">
-                                        {comment.user.charAt(0)}
+                                        {comment.author?.name?.charAt(0) || '?'}
                                     </div>
                                     <div className="grow">
                                         <div className="bg-gray-50 p-4 rounded-xl rounded-tl-none">
                                             <div className="flex justify-between items-start mb-2">
                                                 <div>
-                                                    <span className="font-bold text-gray-900 mr-2">{comment.user}</span>
-                                                    <span className="text-xs text-gray-500">{comment.date}</span>
+                                                    <span className="font-bold text-gray-900 mr-2">{comment.author?.name || 'Anonymous'}</span>
+                                                    <span className="text-xs text-gray-500">
+                                                        {comment.createdAt ? new Date(comment.createdAt).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }) : ''}
+                                                    </span>
                                                 </div>
 
-                                                {/* Actions (Update/Delete) - Only show if 'my' comment (simulated by checking if user exists for now, in real app check IDs) */}
-                                                {user && user.name === comment.user && !comment.isEditing && (
+                                                {/* Actions (Update/Delete) - Only show if 'my' comment */}
+                                                {user && (user._id === comment.author?._id || user.name === comment.author?.name) && !comment.isEditing && (
                                                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <button
                                                             onClick={() => handleEditClick(comment)}
@@ -249,7 +299,7 @@ export default function BlogDetailPage() {
                                                             Edit
                                                         </button>
                                                         <button
-                                                            onClick={() => handleDeleteComment(comment.id)}
+                                                            onClick={() => handleDeleteComment(comment._id)}
                                                             className="text-xs text-red-600 hover:underline"
                                                         >
                                                             Delete
@@ -267,13 +317,13 @@ export default function BlogDetailPage() {
                                                     />
                                                     <div className="flex gap-2 mt-2 justify-end">
                                                         <button
-                                                            onClick={() => handleCancelEdit(comment.id)}
+                                                            onClick={() => handleCancelEdit(comment._id)}
                                                             className="text-xs text-gray-500 hover:text-gray-700"
                                                         >
                                                             Cancel
                                                         </button>
                                                         <button
-                                                            onClick={() => handleSaveEdit(comment.id)}
+                                                            onClick={() => handleSaveEdit(comment._id)}
                                                             className="text-xs bg-primary text-white px-3 py-1 rounded"
                                                         >
                                                             Save
@@ -281,7 +331,7 @@ export default function BlogDetailPage() {
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <p className="text-gray-700 text-sm leading-relaxed">{comment.text}</p>
+                                                <p className="text-gray-700 text-sm leading-relaxed">{comment.content}</p>
                                             )}
                                         </div>
                                     </div>
