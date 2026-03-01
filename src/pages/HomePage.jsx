@@ -16,7 +16,7 @@ export default function HomePage() {
     useEffect(() => {
         const fetchPosts = async () => {
             try {
-                const res = await getAllBlogs();
+                const res = await getAllBlogs(1, 12);
                 const data = res.data.posts;
                 setBlogs(Array.isArray(data) ? data : []);
             } catch (err) {

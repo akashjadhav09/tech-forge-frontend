@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { registerUser } from '../../api/auth.api';
+import { registerUser, loginUser } from '../../api/auth.api';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function RegisterForm() {
@@ -21,16 +21,22 @@ export default function RegisterForm() {
                 return;
             }
 
-            const res = await registerUser({
+            await registerUser({
                 name: name,
                 email: email,
                 password: password,
             });
 
-            // Use context login to update global state
-            await login(res.data.token);
+            // Auto-login after successful registration
+            const loginRes = await loginUser({
+                email: email,
+                password: password,
+            });
 
-            alert("Registration success");
+            // Use context login to update global state
+            await login(loginRes.data.token);
+
+            alert("Registration and login success");
             navigate('/home');
         } catch (err) {
             console.log(err);
