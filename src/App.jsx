@@ -7,6 +7,7 @@ import RegisterForm from "./components/auth/RegisterForm";
 import HomePage from "./pages/HomePage";
 import ContactPage from "./pages/ContactPage";
 import WritePostPage from "./pages/WritePostPage";
+import EditPostPage from "./pages/EditPostPage";
 import MyBlogsPage from "./pages/MyBlogsPage";
 
 import { AuthProvider } from "./contexts/AuthContext";
@@ -28,6 +29,7 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/my-blogs" element={<MyBlogsPage />} />
             <Route path="/writeablog" element={<WritePostPage />} />
+            <Route path="/blogs/:id/edit" element={<EditPostPage />} />
           </Route>
 
           <Route path="/login" element={<LoginForm />} />

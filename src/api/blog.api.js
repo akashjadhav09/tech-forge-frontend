@@ -15,7 +15,17 @@ export const createBlog = (data) => {
 };
 
 export const getAllBlogs = (params) => {
-    return axiosInstance.get("/posts", { params });
+    return axiosInstance.get("/posts", { params: { page: params.pageNumber, limit: params.limit } });
+};
+
+export const searchBlogs = (query, type, params) => {
+    return axiosInstance.get(`/posts/search`, {
+        params: {
+            [type]: query,
+            page: params?.pageNumber,
+            limit: params?.limit
+        }
+    });
 };
 
 export const getBlogById = (id) => {

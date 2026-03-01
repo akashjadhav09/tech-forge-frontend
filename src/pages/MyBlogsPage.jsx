@@ -54,6 +54,7 @@ export default function MyBlogsPage() {
         navigate(`/blogs/${blogId}/edit`);
     };
 
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 py-12 px-4">
