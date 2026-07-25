@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { uploadBlogImage } from '../../api/blog.api';
 
 export default function BlogPostForm({
     mode = "create",
@@ -18,16 +19,39 @@ export default function BlogPostForm({
     const [tags, setTags] = useState(
         initialData.tags ? initialData.tags.join(', ') : ''
     );
-    const [coverImage, setCoverImage] = useState(null);
-    const [coverImagePreview, setCoverImagePreview] = useState(
-    initialData.coverImage
-        ? `http://localhost:3000/${initialData.coverImage}`
-        : null
+    // coverImageUrl: the real http URL stored after a successful upload (or from initialData)
+    const [coverImageUrl, setCoverImageUrl] = useState(
+        initialData.coverImage ?? null
     );
+    // coverImagePreview: blob URL for instant local preview while uploading
+    const [coverImagePreview, setCoverImagePreview] = useState(
+        initialData.coverImage ?? null
+    );
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadError, setUploadError] = useState(null);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const editorRef = useRef(null);
+
+    const normalizeImageUrl = (url) => {
+        if (typeof url !== 'string') return null;
+        const trimmed = url.trim();
+
+        try {
+            const parsed = new URL(trimmed, window.location.origin);
+            const backendBase = import.meta.env.VITE_API_BASE_URL
+                ? new URL(import.meta.env.VITE_API_BASE_URL).origin
+                : 'http://localhost:5000';
+            if (parsed.origin === backendBase) {
+                return parsed.pathname + parsed.search + parsed.hash;
+            }
+        } catch (err) {
+            // ignore invalid URL, fallback to raw string
+        }
+
+        return trimmed;
+    };
 
     // Prefill editor content in edit mode
     useEffect(() => {
@@ -36,11 +60,31 @@ export default function BlogPostForm({
         }
     }, [initialData.content]);
 
-    const handleImageChange = (e) => {
+    const handleImageChange = async (e) => {
         const file = e.target.files[0];
-        if (file) {
-            setCoverImage(file);
-            setCoverImagePreview(URL.createObjectURL(file));
+        if (!file) return;
+
+        // Show blob preview instantly so the user sees their image right away
+        const blobUrl = URL.createObjectURL(file);
+        setCoverImagePreview(blobUrl);
+        setCoverImageUrl(null); // clear old real URL until upload succeeds
+        setUploadError(null);
+        setIsUploading(true);
+
+        try {
+            const res = await uploadBlogImage(file);
+            const rawUrl = res.data?.data?.imageUrl || res.data?.imageUrl;
+            const realUrl = normalizeImageUrl(rawUrl);
+            setCoverImageUrl(realUrl);          // store the real URL
+            setCoverImagePreview(realUrl || blobUrl); // keep preview if URL is invalid
+            URL.revokeObjectURL(blobUrl);        // free memory
+        } catch (err) {
+            console.error('Image upload failed:', err);
+            setUploadError('Image upload failed. Please try again.');
+            setCoverImagePreview(null);           // clear broken preview
+            setCoverImageUrl(null);
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -50,57 +94,51 @@ export default function BlogPostForm({
     };
 
     const handleSubmit = async (status) => {
-    if (isSubmitting) return;
+        if (isSubmitting) return;
 
-    const htmlContent = editorRef.current.innerHTML;
-
-    if (!title.trim() || !htmlContent.trim()) {
-        alert("Please provide a title and content.");
-        return;
-    }
-
-    try {
-        setIsSubmitting(true);
-
-        const tagsArray = tags
-            .split(',')
-            .map(tag => tag.trim())
-            .filter(Boolean);
-
-        let payload;
-
-        // 🔥 If new image selected → use FormData
-        if (coverImage) {
-            const formData = new FormData();
-            formData.append('title', title);
-            formData.append('content', htmlContent);
-            formData.append('status', status);
-
-            tagsArray.forEach(tag => {
-                formData.append('tags', tag);
-            });
-
-            formData.append('coverImage', coverImage);
-
-            payload = formData;
-        } else {
-            // No new image
-            payload = {
-                title,
-                content: htmlContent,
-                status,
-                tags: tagsArray
-            };
+        if (isUploading) {
+            alert('Please wait for the image to finish uploading.');
+            return;
         }
 
-        await onSubmit(payload, mode);
+        const htmlContent = editorRef.current.innerHTML;
 
-    } catch (error) {
-        console.error("Failed to save post:", error);
-    } finally {
-        setIsSubmitting(false);
-    }
-};
+        if (!title.trim() || !htmlContent.trim()) {
+            alert("Please provide a title and content.");
+            return;
+        }
+
+        try {
+            setIsSubmitting(true);
+
+            const statusMap = {
+                draft: "Draft",
+                published: "Published",
+            };
+
+            const tagsArray = tags
+                .split(',')
+                .map(t => t.trim())
+                .filter(Boolean);
+
+            const payload = {
+                title: title.trim(),
+                content: htmlContent,
+                tags: tagsArray,
+                status: statusMap[status] ?? "Draft",
+                // Only include coverImage if we have a real server URL (not a blob)
+                ...(coverImageUrl && { coverImage: coverImageUrl }),
+            };
+
+            await onSubmit(payload);
+
+        } catch (error) {
+            console.error("Failed to save post:", error);
+            alert(error?.response?.data?.message ?? "Failed to save post. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
 
     return (
@@ -125,19 +163,27 @@ export default function BlogPostForm({
                                 Cover Image
                             </label>
 
-                            <div className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-                                coverImagePreview
+                            <div className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-colors ${coverImagePreview
                                     ? 'border-primary bg-purple-50'
                                     : 'border-gray-300 hover:border-primary'
-                            }`}>
+                                }`}>
                                 <input
                                     type="file"
                                     accept="image/*"
                                     onChange={handleImageChange}
-                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                    disabled={isUploading}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed"
                                 />
 
-                                {coverImagePreview ? (
+                                {isUploading ? (
+                                    <div className="flex flex-col items-center gap-2 text-primary">
+                                        <svg className="animate-spin h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                        </svg>
+                                        <p className="text-sm font-medium">Uploading image...</p>
+                                    </div>
+                                ) : coverImagePreview ? (
                                     <div className="relative">
                                         <img
                                             src={coverImagePreview}
@@ -159,11 +205,14 @@ export default function BlogPostForm({
                                             </span> or drag and drop
                                         </p>
                                         <p className="text-xs text-gray-500">
-                                            PNG, JPG, GIF up to 10MB
+                                            PNG, JPG, GIF up to 5MB
                                         </p>
                                     </div>
                                 )}
                             </div>
+                            {uploadError && (
+                                <p className="mt-1 text-sm text-red-500">{uploadError}</p>
+                            )}
                         </div>
 
                         {/* Title */}
@@ -234,9 +283,8 @@ export default function BlogPostForm({
                                 type="button"
                                 onClick={() => handleSubmit('draft')}
                                 disabled={isSubmitting}
-                                className={`px-6 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 ${
-                                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                                }`}
+                                className={`px-6 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                                    }`}
                             >
                                 {isSubmitting ? 'Saving...' : draftButton}
                             </button>
@@ -245,9 +293,8 @@ export default function BlogPostForm({
                                 type="button"
                                 onClick={() => handleSubmit('published')}
                                 disabled={isSubmitting}
-                                className={`px-6 py-2.5 bg-primary border border-transparent rounded-lg text-white font-medium hover:bg-primary-hover shadow-lg shadow-primary/30 transition-all hover:scale-[1.02] ${
-                                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                                }`}
+                                className={`px-6 py-2.5 bg-primary border border-transparent rounded-lg text-white font-medium hover:bg-primary-hover shadow-lg shadow-primary/30 transition-all hover:scale-[1.02] ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                                    }`}
                             >
                                 {isSubmitting ? 'Publishing...' : publishButton}
                             </button>

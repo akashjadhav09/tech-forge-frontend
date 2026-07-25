@@ -1,13 +1,13 @@
 import axiosInstance from "./axiosInstance";
 
 export const registerUser = (data) => {
-    return axiosInstance.post("/auth/register", data);
+    return axiosInstance.post("/auth/signup", data);
 };
 
 export const loginUser = (data) => {
-    return axiosInstance.post("/auth/login", data);
+    return axiosInstance.post("/auth/signin", data);
 };
 
 export const getProfile = () => {
-    return axiosInstance.get("/auth/me");
+    return axiosInstance.get("/users/me");
 };

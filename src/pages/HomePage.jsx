@@ -16,8 +16,8 @@ export default function HomePage() {
     useEffect(() => {
         const fetchPosts = async () => {
             try {
-                const res = await getAllBlogs(1, 12);
-                const data = res.data.posts;
+                const res = await getAllBlogs({ limit: 12, offset: 0, status: 'Published' });
+                const data = res.data.data;
                 setBlogs(Array.isArray(data) ? data : []);
             } catch (err) {
                 console.error(err);
@@ -81,7 +81,7 @@ export default function HomePage() {
                         ) : (
                             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
                                 {posts.map((post, index) => (
-                                    <PostCard key={post._id || index} {...post} />
+                                    <PostCard key={post.blogId} {...post} />
                                 ))}
                             </div>
                         )}
@@ -89,15 +89,18 @@ export default function HomePage() {
                 )}
             </div>
 
-            <div className="pb-6 border-t border-gray-100 flex items-center justify-center">
-                <button
-                    onClick={handleExploreClick}
-                    type="button"
-                    className="px-6 py-2.5 bg-primary border border-transparent rounded-lg text-white font-medium hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary shadow-lg shadow-primary/30 transition-all hover:scale-[1.02] cursor-pointer"
-                >
-                    Explore more
-                </button>
-            </div>
+                {posts.length && (
+                    <div className="pb-6 border-t border-gray-100 flex items-center justify-center">
+                        <button
+                            onClick={handleExploreClick}
+                            type="button"
+                            className="px-6 py-2.5 bg-primary border border-transparent rounded-lg text-white font-medium hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary shadow-lg shadow-primary/30 transition-all hover:scale-[1.02] cursor-pointer"
+                        >
+                            Explore more
+                        </button>
+                    </div>
+                ) }
+            
         </div>
     );
 }

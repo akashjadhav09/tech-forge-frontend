@@ -14,8 +14,6 @@ export default function LoginForm() {
             const email = e.target.email.value;
             const password = e.target.password.value;
 
-            console.log(email, password);
-
             if (!email || !password) {
                 alert("Please fill all fields");
                 return;
@@ -26,8 +24,8 @@ export default function LoginForm() {
                 password: password,
             });
 
-            // Use context login to update global state
-            await login(res.data.token);
+            // Use context login to update global state (stores access_token + refresh_token)
+            await login(res.data);
 
             alert("Login success");
 

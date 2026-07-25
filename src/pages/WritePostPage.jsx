@@ -6,9 +6,13 @@ export default function WritePostPage() {
   const navigate = useNavigate();
 
   const handleCreate = async (data) => {
-    await createBlog(data);
-    alert("Post created successfully");
-    navigate("/home")
+    try {
+      const response = await createBlog(data);
+      console.log("Blog created:", response.data);
+      navigate("/home");
+    } catch (error) {
+      console.error("Create blog failed:", error);
+    }
   };
 
   return (

@@ -4,7 +4,7 @@ import axiosInstance from "./axiosInstance";
 export const createComment = async (blogId, data) => {
     const response = await axiosInstance.post(`/comments/post/${blogId}`, data);
     return response.data;
-};
+}
 
 export const getCommentById = async (commentId) => {
     const response = await axiosInstance.get(`/comments/${commentId}`);
@@ -12,7 +12,7 @@ export const getCommentById = async (commentId) => {
 };
 
 export const getCommentsAsPerBlog = async (blogId) => {
-    const response = await axiosInstance.get(`/comments/post/${blogId}`);
+    const response = await axiosInstance.get(`/comments/${blogId}`);
     return response.data;
 };
 

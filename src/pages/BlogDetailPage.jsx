@@ -59,7 +59,14 @@ export default function BlogDetailPage() {
             try {
                 setLoading(true);
                 const res = await getCommentsAsPerBlog(id);
-                setComments(res);
+                const commentsData = Array.isArray(res)
+                    ? res
+                    : Array.isArray(res?.data)
+                        ? res.data
+                        : Array.isArray(res?.comments)
+                            ? res.comments
+                            : [];
+                setComments(commentsData);
             } catch (err) {
                 console.error(err);
                 setError("Failed to load comments.");
@@ -191,7 +198,7 @@ export default function BlogDetailPage() {
                 <div className="h-96 w-full overflow-hidden relative">
                     <div className="absolute inset-0 bg-black/20 z-10" />
                     <img
-                        src={post.coverImage ? (post.coverImage.startsWith('http') ? post.coverImage : `${import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:3000'}/${post.coverImage}`) : post.image}
+                        src={post.coverImage ? (post.coverImage.startsWith('http') ? post.coverImage : post.coverImage.startsWith('/') ? post.coverImage : `/${post.coverImage}`) : post.image}
                         alt={post.title}
                         className="w-full h-full object-cover"
                     />
@@ -249,7 +256,7 @@ export default function BlogDetailPage() {
                         <form onSubmit={handleAddComment} className="mb-10">
                             <div className="flex gap-4">
                                 <div className="shrink-0 h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                                    {user ? user.name.charAt(0) : '?'}
+                                    {user?.name?.charAt(0) || '?'}
                                 </div>
                                 <div className="grow">
                                     <textarea

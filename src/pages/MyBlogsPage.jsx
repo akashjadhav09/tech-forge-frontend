@@ -25,8 +25,8 @@ export default function MyBlogsPage() {
         try {
             setLoading(true);
             setError(null);
-            const res = await getMyBlogs();
-            setBlogs(res.data.posts || res.data.data || res.data || []);
+            const res = await getMyBlogs(user.data.userId);
+            setBlogs(res.data.data || res.data.data || res.data || []);
         } catch (err) {
             console.error('Error fetching my blogs:', err);
             setError(err.response?.data?.message || 'Failed to load your blogs');

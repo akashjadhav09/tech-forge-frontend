@@ -8,7 +8,6 @@ export default function Navbar() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
-
     const isActive = (path) => {
         return location.pathname === path ? "text-primary font-semibold" : "text-gray-500 hover:text-primary";
     };
@@ -150,7 +149,7 @@ export default function Navbar() {
                                         className="flex items-center gap-2 focus:outline-none"
                                     >
                                         <div className={`h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm border-2 transition-all ${isDropdownOpen ? 'border-primary' : 'border-transparent hover:border-primary'}`}>
-                                            {user.name.charAt(0)}
+                                            {user?.data?.fullName?.charAt(0)?.toUpperCase()}
                                         </div>
                                     </button>
 
@@ -158,7 +157,7 @@ export default function Navbar() {
                                     <div className={`absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 transform transition-all duration-200 origin-top-right z-50 ${isDropdownOpen ? 'block opacity-100 scale-100' : 'hidden opacity-0 scale-95'}`}>
                                         <div className="px-4 py-2 border-b border-gray-50">
                                             <p className="text-xs text-gray-500">Signed in as</p>
-                                            <p className="text-sm font-semibold truncate text-gray-900">{user.name}</p>
+                                            <p className="text-sm font-semibold truncate text-gray-900">{user?.data?.fullName}</p>
                                         </div>
                                         <Link to="/my-blogs" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
                                             My Blogs
@@ -244,12 +243,12 @@ export default function Navbar() {
                                 <div className="flex items-center px-3">
                                     <div className="flex-shrink-0">
                                         <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                                            {user.name.charAt(0)}
+                                            {user?.data?.fullName?.charAt(0)?.toUpperCase()}
                                         </div>
                                     </div>
                                     <div className="ml-3">
-                                        <div className="text-base font-medium text-gray-800">{user.name}</div>
-                                        <div className="text-sm font-medium text-gray-500">{user.email}</div>
+                                        <div className="text-base font-medium text-gray-800">{user?.data?.fullName}</div>
+                                        <div className="text-sm font-medium text-gray-500">{user?.data?.email}</div>
                                     </div>
                                 </div>
                                 <div className="space-y-2">

@@ -32,7 +32,7 @@ export default function ExploreBlogsPage() {
                 res = await getAllBlogs({ pageNumber, limit });
             }
 
-            const data = res.data.posts || [];
+            const data = res.data.data || [];
 
             if (data.length < limit) {
                 setHasMore(false);
@@ -83,8 +83,8 @@ export default function ExploreBlogsPage() {
                         <div className="text-center text-gray-500">No blogs found.</div>
                     ) : (
                         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-                            {posts.map((post, index) => (
-                                <PostCard key={index} {...post} />
+                            {posts.map((post) => (
+                                <PostCard key={post.blogId} {...post} />
                             ))}
                         </div>
                     )}

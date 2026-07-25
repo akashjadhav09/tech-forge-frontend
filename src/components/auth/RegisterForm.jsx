@@ -22,7 +22,7 @@ export default function RegisterForm() {
             }
 
             await registerUser({
-                name: name,
+                full_name: name,
                 email: email,
                 password: password,
             });
@@ -33,8 +33,8 @@ export default function RegisterForm() {
                 password: password,
             });
 
-            // Use context login to update global state
-            await login(loginRes.data.token);
+            // Use context login to update global state (stores access_token + refresh_token)
+            await login(loginRes.data);
 
             alert("Registration and login success");
             navigate('/home');
