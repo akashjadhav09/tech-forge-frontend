@@ -4,6 +4,21 @@ import { useNavigate } from 'react-router-dom';
 
 const AuthContext = createContext(null);
 
+// One-time migration: move old snake_case keys → camelCase keys
+// const migrateTokenKeys = () => {
+//     const oldAccess = localStorage.getItem("access_token");
+//     const oldRefresh = localStorage.getItem("refresh_token");
+
+//     if (oldAccess) {
+//         localStorage.setItem("accessToken", oldAccess);
+//         localStorage.removeItem("access_token");
+//     }
+//     if (oldRefresh) {
+//         localStorage.setItem("refreshToken", oldRefresh);
+//         localStorage.removeItem("refresh_token");
+//     }
+// };
+
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -11,7 +26,7 @@ export const AuthProvider = ({ children }) => {
 
     const fetchUser = async () => {
         try {
-            const token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("accessToken");
             if (token) {
                 const res = await getProfile();
                 setUser(res.data);
@@ -20,8 +35,8 @@ export const AuthProvider = ({ children }) => {
             }
         } catch (error) {
             console.error("Failed to fetch user profile", error);
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("refresh_token");
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
             setUser(null);
         } finally {
             setLoading(false);
@@ -29,6 +44,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     useEffect(() => {
+        // migrateTokenKeys(); // run migration before fetchUser
         fetchUser();
     }, []);
 
@@ -37,22 +53,22 @@ export const AuthProvider = ({ children }) => {
         const refreshToken = responseData?.data.refreshToken;
 
         if (!accessToken) {
-            console.error("[AuthContext] access_token not found in response");
-            throw new Error("access_token missing from server response");
+            console.error("[AuthContext] accessToken not found in response");
+            throw new Error("accessToken missing from server response");
         }
 
-        localStorage.setItem("access_token", accessToken);
+        localStorage.setItem("accessToken", accessToken);
         if (refreshToken) {
-            localStorage.setItem("refresh_token", refreshToken);
+            localStorage.setItem("refreshToken", refreshToken);
         }
         await fetchUser();
     };
 
     const logout = () => {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
         setUser(null);
-        navigate('/login')
+        navigate('/login');
     };
 
     return (

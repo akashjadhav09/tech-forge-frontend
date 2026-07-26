@@ -10,7 +10,7 @@ const axiosInstance = axios.create({
 // Attach access token automatically to every request
 axiosInstance.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem("access_token");
+        const token = localStorage.getItem("accessToken");
         // Guard: skip if token is missing or the literal string "undefined"
         if (token && token !== "undefined" && token !== "null") {
             config.headers.Authorization = `Bearer ${token}`;
@@ -56,25 +56,27 @@ axiosInstance.interceptors.response.use(
             originalRequest._retry = true;
             isRefreshing = true;
 
-            const refreshToken = localStorage.getItem("refresh_token");
+            const refreshToken = localStorage.getItem("refreshToken");
 
             if (!refreshToken) {
                 // No refresh token — clear storage and reject
-                localStorage.removeItem("access_token");
-                localStorage.removeItem("refresh_token");
+                localStorage.removeItem("accessToken");
+                localStorage.removeItem("refreshToken");
                 isRefreshing = false;
                 return Promise.reject(error);
             }
 
             try {
                 const { data } = await axios.post(`${BASE_URL}/auth/refresh-token`, {
-                    refresh_token: refreshToken,
+                    refreshToken: refreshToken,
                 });
 
-                const newAccessToken = data.access_token;
-                localStorage.setItem("access_token", newAccessToken);
-                if (data.refresh_token) {
-                    localStorage.setItem("refresh_token", data.refresh_token);
+                // Support both camelCase and snake_case response shapes
+                const newAccessToken = data.accessToken ?? data.access_token;
+                localStorage.setItem("accessToken", newAccessToken);
+                const newRefreshToken = data.refreshToken ?? data.refresh_token;
+                if (newRefreshToken) {
+                    localStorage.setItem("refreshToken", newRefreshToken);
                 }
 
                 axiosInstance.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
@@ -84,8 +86,8 @@ axiosInstance.interceptors.response.use(
                 return axiosInstance(originalRequest);
             } catch (refreshError) {
                 processQueue(refreshError, null);
-                localStorage.removeItem("access_token");
-                localStorage.removeItem("refresh_token");
+                localStorage.removeItem("accessToken");
+                localStorage.removeItem("refreshToken");
                 return Promise.reject(refreshError);
             } finally {
                 isRefreshing = false;

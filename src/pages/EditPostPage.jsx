@@ -7,18 +7,37 @@ export default function EditPostPage() {
     const { id } = useParams();
     const [post, setPost] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
+        if (!id) {
+            setError('Blog ID is missing from the URL.');
+            setLoading(false);
+            return;
+        }
+
         const fetchBlog = async () => {
             try {
+                setLoading(true);
                 const res = await getBlogById(id);
 
-                // 🔥 IMPORTANT FIX
-                setPost(res.data.post);
+                // API response shape: { success, data: { blogId, title, ... } }
+                const blogData =
+                    res?.data?.post ??
+                    res?.data?.data ??
+                    res?.data ??
+                    null;
 
+                // Accept either _id (Mongoose) or blogId (UUID-based backend)
+                if (!blogData || (!blogData._id && !blogData.blogId)) {
+                    setError('Blog not found.');
+                } else {
+                    setPost(blogData);
+                }
             } catch (err) {
-                console.error(err);
+                console.error('Failed to load blog for editing:', err);
+                setError(err?.response?.data?.message || 'Failed to load blog.');
             } finally {
                 setLoading(false);
             }
@@ -27,14 +46,42 @@ export default function EditPostPage() {
         fetchBlog();
     }, [id]);
 
-
     const handleUpdate = async (data) => {
         await updateBlog(id, data);
-        navigate("/home")
+        navigate('/my-blogs');
     };
 
-    if (loading) return <div>Loading...</div>;
-    if (!post) return <div>Blog not found</div>;
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="animate-pulse text-gray-500 text-lg">Loading blog...</div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center">
+                    <p className="text-red-600 font-semibold text-lg">{error}</p>
+                    <button
+                        onClick={() => navigate('/my-blogs')}
+                        className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                        Back to My Blogs
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (!post) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <p className="text-gray-500 text-lg">Blog not found.</p>
+            </div>
+        );
+    }
 
     return (
         <BlogPostForm
@@ -43,6 +90,7 @@ export default function EditPostPage() {
             onSubmit={handleUpdate}
             labels={{
                 heading: "Edit Post",
+                subheading: "Update your article below.",
                 publishButton: "Update & Publish",
                 draftButton: "Update Draft"
             }}
