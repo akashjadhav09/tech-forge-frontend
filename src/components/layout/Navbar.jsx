@@ -110,11 +110,13 @@ export default function Navbar() {
 
                     {/* Right Section: Search & Auth */}
                     <div className="flex items-center gap-4">
-                        {/* Search Input - Minimalist (Hidden on mobile) */}
-                        <SearchWithDropdown
-                            options={["Title", "Author", "Category"]}
-                            onSearch={handleSearch}
-                        />
+                        {/* Search Input - Only visible on ExploreBlogsPage */}
+                        {location.pathname === "/blogs" && (
+                            <SearchWithDropdown
+                                options={["Title", "Author", "Category"]}
+                                onSearch={handleSearch}
+                            />
+                        )}
                         {/* Notifications (Hidden on small mobile) */}
                         {user && (
                             <Link to="/notifications" className="hidden sm:hidden text-gray-400 hover:text-primary transition-colors relative">
