@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import AlertModal from '../common/AlertModal';
 import { uploadBlogImage } from '../../api/blog.api';
 
 export default function BlogPostForm({
@@ -31,6 +32,14 @@ export default function BlogPostForm({
     const [uploadError, setUploadError] = useState(null);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const [alertMessage, setAlertMessage] = useState('');
+    const [alertOpen, setAlertOpen] = useState(false);
+
+    const showAlert = (msg) => {
+        setAlertMessage(msg);
+        setAlertOpen(true);
+    };
 
     const editorRef = useRef(null);
 
@@ -97,14 +106,14 @@ export default function BlogPostForm({
         if (isSubmitting) return;
 
         if (isUploading) {
-            alert('Please wait for the image to finish uploading.');
+            showAlert('Please wait for the image to finish uploading.');
             return;
         }
 
         const htmlContent = editorRef.current.innerHTML;
 
         if (!title.trim() || !htmlContent.trim()) {
-            alert("Please provide a title and content.");
+            showAlert("Please provide a title and content.");
             return;
         }
 
@@ -134,7 +143,7 @@ export default function BlogPostForm({
 
         } catch (error) {
             console.error("Failed to save post:", error);
-            alert(error?.response?.data?.message ?? "Failed to save post. Please try again.");
+            showAlert(error?.response?.data?.message ?? "Failed to save post. Please try again.");
         } finally {
             setIsSubmitting(false);
         }
@@ -143,6 +152,11 @@ export default function BlogPostForm({
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+            <AlertModal
+                isOpen={alertOpen}
+                message={alertMessage}
+                onClose={() => setAlertOpen(false)}
+            />
             <div className="max-w-4xl mx-auto">
                 <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
                     <div className="p-8 space-y-8">

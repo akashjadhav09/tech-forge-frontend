@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import AlertModal from '../components/common/AlertModal';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getBlogById } from '../api/blog.api';
@@ -14,6 +15,14 @@ export default function BlogDetailPage() {
     const [post, setPost] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    const [alertMessage, setAlertMessage] = useState('');
+    const [alertOpen, setAlertOpen] = useState(false);
+
+    const showAlert = (msg) => {
+        setAlertMessage(msg);
+        setAlertOpen(true);
+    };
 
     // Interaction States - MUST be declared before any early returns
     const [likes, setLikes] = useState(0);
@@ -149,7 +158,7 @@ export default function BlogDetailPage() {
     // --- Handlers ---
 
     const handleLike = async () => {
-        if (!user) return alert("Please login to like posts.");
+        if (!user) { showAlert("Please login to like posts."); return; }
         if (reactionLoading) return;
 
         // Optimistic update
@@ -187,7 +196,7 @@ export default function BlogDetailPage() {
     };
 
     const handleDislike = async () => {
-        if (!user) return alert("Please login to react to posts.");
+        if (!user) { showAlert("Please login to react to posts."); return; }
         if (reactionLoading) return;
 
         // Optimistic update
@@ -270,7 +279,7 @@ export default function BlogDetailPage() {
         } catch (error) {
             console.error("Failed to create comment", error);
             setComments(current => current.filter(c => c.commentId !== tempId));
-            alert(error?.response?.data?.message || 'Failed to post comment.');
+            showAlert(error?.response?.data?.message || 'Failed to post comment.');
         }
     };
 
@@ -303,7 +312,7 @@ export default function BlogDetailPage() {
             }
         } catch (error) {
             console.error("Failed to update comment", error);
-            alert(error?.response?.data?.message || 'Failed to update comment.');
+            showAlert(error?.response?.data?.message || 'Failed to update comment.');
         }
     };
 
@@ -330,6 +339,11 @@ export default function BlogDetailPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+            <AlertModal
+                isOpen={alertOpen}
+                message={alertMessage}
+                onClose={() => setAlertOpen(false)}
+            />
             <article className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
                 {/* Hero Image */}
                 <div className="h-96 w-full overflow-hidden relative">

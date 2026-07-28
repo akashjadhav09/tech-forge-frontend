@@ -1,11 +1,31 @@
+import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { loginUser } from '../../api/auth.api';
 import { useAuth } from '../../contexts/AuthContext';
+import AlertModal from '../common/AlertModal';
 
 export default function LoginForm() {
 
     const navigate = useNavigate();
     const { login } = useAuth();
+
+    const [alertMessage, setAlertMessage] = useState('');
+    const [alertOpen, setAlertOpen] = useState(false);
+    const pendingNav = useRef(null);
+
+    const showAlert = (msg, navigateTo = null) => {
+        pendingNav.current = navigateTo;
+        setAlertMessage(msg);
+        setAlertOpen(true);
+    };
+
+    const handleClose = () => {
+        setAlertOpen(false);
+        if (pendingNav.current) {
+            navigate(pendingNav.current);
+            pendingNav.current = null;
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -15,7 +35,7 @@ export default function LoginForm() {
             const password = e.target.password.value;
 
             if (!email || !password) {
-                alert("Please fill all fields");
+                showAlert("Please fill all fields");
                 return;
             }
 
@@ -27,17 +47,21 @@ export default function LoginForm() {
             // Use context login to update global state (stores access_token + refresh_token)
             await login(res.data);
 
-            alert("Login success");
-
-            navigate('/home');
+            showAlert("Login success", '/home');
         } catch (err) {
             console.log(err);
-            alert(err.response?.data?.message || "Login failed");
+            showAlert(err.response?.data?.message || "Login failed");
         }
     }
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+            <AlertModal
+                isOpen={alertOpen}
+                message={alertMessage}
+                onClose={handleClose}
+            />
+
             <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg border border-gray-100">
                 <div className="text-center">
                     <h2 className="mt-2 text-3xl font-extrabold text-gray-900">

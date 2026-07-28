@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import AlertModal from '../components/common/AlertModal';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getMyBlogs, deleteBlog, updateBlog } from '../api/blog.api';
@@ -11,6 +12,14 @@ export default function MyBlogsPage() {
     const [blogs, setBlogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    const [alertMessage, setAlertMessage] = useState('');
+    const [alertOpen, setAlertOpen] = useState(false);
+
+    const showAlert = (msg) => {
+        setAlertMessage(msg);
+        setAlertOpen(true);
+    };
 
     useEffect(() => {
         if (!user) {
@@ -46,7 +55,7 @@ export default function MyBlogsPage() {
             setBlogs(prev => prev.filter(blog => blog.blogId !== blogId));
         } catch (err) {
             console.error('Error deleting blog:', err);
-            alert(err.response?.data?.message || 'Failed to delete blog');
+            showAlert(err.response?.data?.message || 'Failed to delete blog');
         }
     };
 
@@ -65,7 +74,7 @@ export default function MyBlogsPage() {
             );
         } catch (err) {
             console.error('Error publishing blog:', err);
-            alert(err.response?.data?.message || 'Failed to publish blog');
+            showAlert(err.response?.data?.message || 'Failed to publish blog');
         }
     };
 
@@ -104,6 +113,11 @@ export default function MyBlogsPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+            <AlertModal
+                isOpen={alertOpen}
+                message={alertMessage}
+                onClose={() => setAlertOpen(false)}
+            />
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="mb-12">

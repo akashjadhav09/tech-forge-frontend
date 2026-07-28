@@ -105,9 +105,8 @@ export default function ProfilePage() {
             <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
                 {/* Upload Message Toast */}
                 {uploadMessage.text && (
-                    <div className={`fixed top-4 right-4 px-4 py-3 rounded-lg text-white z-50 ${
-                        uploadMessage.type === 'success' ? 'bg-green-500' : 'bg-red-500'
-                    }`}>
+                    <div className={`fixed top-4 right-4 px-4 py-3 rounded-lg text-white z-50 ${uploadMessage.type === 'success' ? 'bg-green-500' : 'bg-red-500'
+                        }`}>
                         {uploadMessage.text}
                     </div>
                 )}
@@ -176,7 +175,7 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mt-10 border-t border-gray-100 pt-8">
+                    {/* <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mt-10 border-t border-gray-100 pt-8">
                         <div className="text-center p-4 bg-gray-50 rounded-xl">
                             <span className="block text-2xl font-bold text-gray-900">{blogCount}</span>
                             <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Blogs Published</span>
@@ -193,7 +192,7 @@ export default function ProfilePage() {
                             </span>
                             <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Member Since</span>
                         </div>
-                    </div>
+                    </div> */}
                 </div>
             </div>
         </div>

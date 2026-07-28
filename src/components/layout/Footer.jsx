@@ -8,15 +8,15 @@ export default function Footer() {
                     <Link to="/home" className="text-gray-300 hover:text-primary transition-colors">
                         Home
                     </Link>
-                    <Link to="/contact" className="text-gray-300 hover:text-primary transition-colors">
+                    {/* <Link to="/contact" className="text-gray-300 hover:text-primary transition-colors">
                         Contact
-                    </Link>
+                    </Link> */}
                     <Link to="/blogs" className="text-gray-300 hover:text-primary transition-colors">
                         Blogs
                     </Link>
-                    <Link to="/privacy" className="text-gray-300 hover:text-primary transition-colors">
+                    {/* <Link to="/privacy" className="text-gray-300 hover:text-primary transition-colors">
                         Privacy
-                    </Link>
+                    </Link> */}
                 </div>
                 <div className="mt-8 flex justify-center space-x-6">
                     <a href="#" className="text-gray-400 hover:text-primary transition-colors">

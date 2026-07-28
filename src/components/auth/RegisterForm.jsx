@@ -1,10 +1,30 @@
+import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { registerUser, loginUser } from '../../api/auth.api';
 import { useAuth } from '../../contexts/AuthContext';
+import AlertModal from '../common/AlertModal';
 
 export default function RegisterForm() {
     const navigate = useNavigate();
     const { login } = useAuth();
+
+    const [alertMessage, setAlertMessage] = useState('');
+    const [alertOpen, setAlertOpen] = useState(false);
+    const pendingNav = useRef(null);
+
+    const showAlert = (msg, navigateTo = null) => {
+        pendingNav.current = navigateTo;
+        setAlertMessage(msg);
+        setAlertOpen(true);
+    };
+
+    const handleClose = () => {
+        setAlertOpen(false);
+        if (pendingNav.current) {
+            navigate(pendingNav.current);
+            pendingNav.current = null;
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -15,7 +35,7 @@ export default function RegisterForm() {
             const confirmPassword = e.target.confirmPassword.value;
 
             if (password !== confirmPassword) {
-                alert("Passwords do not match");
+                showAlert("Passwords do not match");
                 return;
             }
 
@@ -34,16 +54,21 @@ export default function RegisterForm() {
             // Use context login to update global state (stores access_token + refresh_token)
             await login(loginRes.data);
 
-            alert("Registration and login success");
-            navigate('/home');
+            showAlert("Registration and login success", '/home');
         } catch (err) {
             console.log(err);
-            alert(err.response?.data?.message || "Registration failed");
+            showAlert(err.response?.data?.message || "Registration failed");
         }
     }
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+            <AlertModal
+                isOpen={alertOpen}
+                message={alertMessage}
+                onClose={handleClose}
+            />
+
             <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg border border-gray-100">
                 <div className="text-center">
                     <h2 className="mt-2 text-3xl font-extrabold text-gray-900">

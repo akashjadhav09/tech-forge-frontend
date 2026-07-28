@@ -97,9 +97,9 @@ export default function Navbar() {
                         <a href="#" onClick={handleWriteClick} className={`text-xs font-bold uppercase tracking-wider transition-colors duration-200 ${isActive('/writeablog')}`}>
                             Write
                         </a>
-                        <Link to="/contact" className={`text-xs font-bold uppercase tracking-wider transition-colors duration-200 ${isActive('/contact')}`}>
+                        {/* <Link to="/contact" className={`text-xs font-bold uppercase tracking-wider transition-colors duration-200 ${isActive('/contact')}`}>
                             Contact
-                        </Link>
+                        </Link> */}
 
                         {user?.role === "admin" && (
                             <Link to="/admin" className={`text-xs font-bold uppercase tracking-wider transition-colors duration-200 text-red-500 hover:text-red-600`}>
@@ -111,12 +111,12 @@ export default function Navbar() {
                     {/* Right Section: Search & Auth */}
                     <div className="flex items-center gap-4">
                         {/* Search Input - Only visible on ExploreBlogsPage */}
-                        {location.pathname === "/blogs" && (
+                        {/* {location.pathname === "/blogs" && (
                             <SearchWithDropdown
                                 options={["Title", "Author", "Category"]}
                                 onSearch={handleSearch}
                             />
-                        )}
+                        )} */}
                         {/* Notifications (Hidden on small mobile) */}
                         {user && (
                             <Link to="/notifications" className="hidden sm:hidden text-gray-400 hover:text-primary transition-colors relative">
