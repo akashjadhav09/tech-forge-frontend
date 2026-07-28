@@ -8,7 +8,6 @@ export default function WritePostPage() {
   const handleCreate = async (data) => {
     try {
       const response = await createBlog(data);
-      console.log("Blog created:", response.data);
       navigate("/home");
     } catch (error) {
       console.error("Create blog failed:", error);

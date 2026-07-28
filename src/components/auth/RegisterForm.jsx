@@ -14,8 +14,6 @@ export default function RegisterForm() {
             const password = e.target.password.value;
             const confirmPassword = e.target.confirmPassword.value;
 
-            console.log(name, email, password, confirmPassword);
-
             if (password !== confirmPassword) {
                 alert("Passwords do not match");
                 return;
