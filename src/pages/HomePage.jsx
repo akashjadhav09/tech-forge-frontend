@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
-import PostTags from "../components/blog/PostTags";
-import PostCard from "../components/blog/PostCard";
+
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { getAllBlogs } from "../api/blog.api";
+
+import Loader from "../components/common/Loader";
+import PostTags from "../components/blog/PostTags";
+import PostCard from "../components/blog/PostCard";
+
 
 export default function HomePage() {
     const { user } = useAuth();
@@ -69,14 +73,23 @@ export default function HomePage() {
             </div>
 
             <div className="max-w-7xl mx-auto px-4 py-10">
-                {loading && <div className="text-center py-10">Loading blogs...</div>}
+                {loading &&
+                    <div className="text-center py-10">
+                        <Loader />
+                    </div>
+                }
                 {error && <div className="text-center py-10 text-red-500">Error: {error}</div>}
 
                 {!loading && !error && (
                     <>
                         {posts.length === 0 ? (
                             <div className="text-center text-gray-500">
-                                {selectedTag ? `No blogs found with tag "${selectedTag}"` : 'No blogs found.'}
+                                {selectedTag ? `No blogs found with tag "${selectedTag}"` :
+                                    <div>
+                                        <img src="public/assets/not-found.svg" alt="No Blogs Found" className="mx-auto mb-4 w-32 h-32" />
+                                        <p>No blogs found.</p>
+                                    </div>
+                                }
                             </div>
                         ) : (
                             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
@@ -94,7 +107,7 @@ export default function HomePage() {
                     <button
                         onClick={handleExploreClick}
                         type="button"
-                        className="px-6 py-2.5 bg-primary border border-transparent rounded-lg text-white font-medium hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary shadow-lg shadow-primary/30 transition-all hover:scale-[1.02] cursor-pointer"
+                        className="cursor-pointer px-6 py-2.5 bg-primary border border-transparent rounded-lg text-white font-medium hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary shadow-lg shadow-primary/30 transition-all hover:scale-[1.02] cursor-pointer"
                     >
                         Explore more
                     </button>

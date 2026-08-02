@@ -136,9 +136,9 @@ export default function BlogDetailPage() {
                 // API returns: { data: [ { commentId, authorName, userId, content, ... } ] }
                 const commentsData =
                     Array.isArray(res?.data) ? res.data :
-                    Array.isArray(res) ? res :
-                    Array.isArray(res?.comments) ? res.comments :
-                    [];
+                        Array.isArray(res) ? res :
+                            Array.isArray(res?.comments) ? res.comments :
+                                [];
                 setComments(commentsData);
             } catch (err) {
                 console.error(err);
@@ -409,21 +409,21 @@ export default function BlogDetailPage() {
                         <form onSubmit={handleAddComment} className="mb-10">
                             <div className="flex gap-4">
                                 <div className="shrink-0 h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                                    {user?.name?.charAt(0) || '?'}
+                                    {user?.data?.fullName?.charAt(0) || '?'}
                                 </div>
                                 <div className="grow">
                                     <textarea
                                         value={newComment}
                                         onChange={(e) => setNewComment(e.target.value)}
                                         placeholder={user ? "Add to the discussion..." : "Login to comment..."}
-                                        className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-y min-h-25"
+                                        className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none transition-all resize-y min-h-25"
                                         disabled={!user}
                                     />
                                     <div className="mt-2 flex justify-end">
                                         <button
                                             type="submit"
                                             disabled={!user || !newComment.trim()}
-                                            className="px-6 py-2 bg-primary text-white font-semibold rounded-lg shadow-md hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                            className="cursor-pointer px-6 py-2 bg-primary text-white font-semibold rounded-lg shadow-md hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                                         >
                                             Post Comment
                                         </button>
@@ -445,9 +445,9 @@ export default function BlogDetailPage() {
                                                 <div>
                                                     <span className="font-bold text-gray-900 mr-2">
                                                         {comment.authorName ||
-                                                         comment.author?.name ||
-                                                         comment.author?.username ||
-                                                         'Anonymous'}
+                                                            comment.author?.name ||
+                                                            comment.author?.username ||
+                                                            'Anonymous'}
                                                     </span>
                                                     <span className="text-xs text-gray-500">
                                                         {comment.createdAt ? new Date(comment.createdAt).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }) : ''}
@@ -465,21 +465,21 @@ export default function BlogDetailPage() {
                                                         (loggedInId && comment.author?._id && loggedInId === comment.author._id);
                                                     return isOwner && !comment.isEditing;
                                                 })() && (
-                                                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button
-                                                            onClick={() => handleEditClick(comment)}
-                                                            className="text-xs text-blue-600 hover:underline"
-                                                        >
-                                                            Edit
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteComment(comment.commentId || comment._id)}
-                                                            className="text-xs text-red-600 hover:underline"
-                                                        >
-                                                            Delete
-                                                        </button>
-                                                    </div>
-                                                )}
+                                                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <button
+                                                                onClick={() => handleEditClick(comment)}
+                                                                className="cursor-pointer text-xs text-blue-600 hover:underline"
+                                                            >
+                                                                Edit
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteComment(comment.commentId || comment._id)}
+                                                                className="cursor-pointer text-xs text-red-600 hover:underline"
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        </div>
+                                                    )}
                                             </div>
 
                                             {comment.isEditing ? (
@@ -492,13 +492,13 @@ export default function BlogDetailPage() {
                                                     <div className="flex gap-2 mt-2 justify-end">
                                                         <button
                                                             onClick={() => handleCancelEdit(comment.commentId || comment._id)}
-                                                            className="text-xs text-gray-500 hover:text-gray-700"
+                                                            className="cursor-pointer text-xs text-gray-500 hover:text-gray-700"
                                                         >
                                                             Cancel
                                                         </button>
                                                         <button
                                                             onClick={() => handleSaveEdit(comment.commentId || comment._id)}
-                                                            className="text-xs bg-primary text-white px-3 py-1 rounded"
+                                                            className="cursor-pointer text-xs bg-primary text-white px-3 py-1 rounded"
                                                         >
                                                             Save
                                                         </button>

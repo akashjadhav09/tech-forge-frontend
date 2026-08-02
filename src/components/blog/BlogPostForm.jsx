@@ -1,12 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
 import AlertModal from '../common/AlertModal';
+import ConfirmationModal from '../common/ConfirmationModal';
 import { uploadBlogImage } from '../../api/blog.api';
+import { clearDraft, loadDraft, saveDraft } from '../../utils/draftStorage';
 
 export default function BlogPostForm({
     mode = "create",
     initialData = {},
     onSubmit,
-    labels = {}
+    labels = {},
+    draftId = 'blog-post-draft'
 }) {
 
     const {
@@ -20,18 +23,16 @@ export default function BlogPostForm({
     const [tags, setTags] = useState(
         initialData.tags ? initialData.tags.join(', ') : ''
     );
+    const [content, setContent] = useState(initialData.content || '');
     // coverImageUrl: the real http URL stored after a successful upload (or from initialData)
-    const [coverImageUrl, setCoverImageUrl] = useState(
-        initialData.coverImage ?? null
-    );
+    const [coverImageUrl, setCoverImageUrl] = useState(initialData.coverImage ?? null);
     // coverImagePreview: blob URL for instant local preview while uploading
-    const [coverImagePreview, setCoverImagePreview] = useState(
-        initialData.coverImage ?? null
-    );
+    const [coverImagePreview, setCoverImagePreview] = useState(initialData.coverImage ?? null);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadError, setUploadError] = useState(null);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
 
     const [alertMessage, setAlertMessage] = useState('');
     const [alertOpen, setAlertOpen] = useState(false);
@@ -42,6 +43,8 @@ export default function BlogPostForm({
     };
 
     const editorRef = useRef(null);
+    const lastSavedDraftRef = useRef(null);
+    const isDraftHydratedRef = useRef(false);
 
     const normalizeImageUrl = (url) => {
         if (typeof url !== 'string') return null;
@@ -62,12 +65,103 @@ export default function BlogPostForm({
         return trimmed;
     };
 
-    // Prefill editor content in edit mode
+    const buildDraftPayload = () => {
+        const htmlContent = editorRef.current?.innerHTML ?? content;
+        const tagsArray = tags
+            .split(',')
+            .map(tag => tag.trim().toLowerCase())
+            .filter(Boolean);
+
+        return {
+            title: title.trim(),
+            tags: tagsArray,
+            content: htmlContent,
+            coverImage: coverImageUrl ?? null,
+        };
+    };
+
+    const resetForm = () => {
+        setTitle('');
+        setTags('');
+        setContent('');
+        setCoverImageUrl(null);
+        setCoverImagePreview(null);
+        setUploadError(null);
+        if (editorRef.current) {
+            editorRef.current.innerHTML = '';
+        }
+        lastSavedDraftRef.current = null;
+    };
+
+    const handleDiscardDraft = () => {
+        const hasDraftContent = Boolean(title.trim() || tags.trim() || content.trim() || coverImageUrl);
+        if (!hasDraftContent) {
+            clearDraft(draftId);
+            lastSavedDraftRef.current = null;
+            showAlert('No draft to discard.');
+            return;
+        }
+
+        setIsDiscardModalOpen(true);
+    };
+
+    const confirmDiscardDraft = () => {
+        clearDraft(draftId);
+        resetForm();
+        setIsDiscardModalOpen(false);
+        showAlert('Draft discarded.');
+    };
+
     useEffect(() => {
-        if (editorRef.current && initialData.content) {
-            editorRef.current.innerHTML = initialData.content;
+        if (initialData.content) {
+            setContent(initialData.content);
         }
     }, [initialData.content]);
+
+    useEffect(() => {
+        if (editorRef.current && editorRef.current.innerHTML !== content) {
+            editorRef.current.innerHTML = content;
+        }
+    }, [content]);
+
+    useEffect(() => {
+        if (isDraftHydratedRef.current) return;
+
+        try {
+            const savedDraft = loadDraft(draftId);
+            if (savedDraft) {
+                setTitle(savedDraft.title || '');
+                setTags(savedDraft.tags ? savedDraft.tags.join(', ') : '');
+                setContent(typeof savedDraft.content === 'string' ? savedDraft.content : '');
+                setCoverImageUrl(savedDraft.coverImage ?? null);
+                setCoverImagePreview(savedDraft.coverImage ?? null);
+                lastSavedDraftRef.current = savedDraft;
+            }
+        } catch (error) {
+            console.warn('Draft restore failed:', error);
+            clearDraft(draftId);
+        } finally {
+            isDraftHydratedRef.current = true;
+        }
+    }, [draftId]);
+
+    useEffect(() => {
+        if (!isDraftHydratedRef.current) return;
+
+        const timeoutId = window.setTimeout(() => {
+            const payload = buildDraftPayload();
+            const hasPayloadContent = Boolean(payload.title || payload.tags.length || payload.content || payload.coverImage);
+            const payloadSignature = JSON.stringify(payload);
+
+            if (!hasPayloadContent) return;
+            if (lastSavedDraftRef.current && JSON.stringify(lastSavedDraftRef.current) === payloadSignature) return;
+
+            saveDraft({ draftId, payload });
+            lastSavedDraftRef.current = payload;
+        }, 1500);
+
+        return () => window.clearTimeout(timeoutId);
+    }, [title, tags, content, coverImageUrl, draftId]);
 
     const handleImageChange = async (e) => {
         const file = e.target.files[0];
@@ -110,7 +204,7 @@ export default function BlogPostForm({
             return;
         }
 
-        const htmlContent = editorRef.current.innerHTML;
+        const htmlContent = editorRef.current?.innerHTML ?? content;
 
         if (!title.trim() || !htmlContent.trim()) {
             showAlert("Please provide a title and content.");
@@ -127,7 +221,7 @@ export default function BlogPostForm({
 
             const tagsArray = tags
                 .split(',')
-                .map(t => t.trim())
+                .map(tag => tag.trim().toLowerCase())
                 .filter(Boolean);
 
             const payload = {
@@ -140,7 +234,8 @@ export default function BlogPostForm({
             };
 
             await onSubmit(payload);
-
+            clearDraft(draftId);
+            resetForm();
         } catch (error) {
             console.error("Failed to save post:", error);
             showAlert(error?.response?.data?.message ?? "Failed to save post. Please try again.");
@@ -156,6 +251,14 @@ export default function BlogPostForm({
                 isOpen={alertOpen}
                 message={alertMessage}
                 onClose={() => setAlertOpen(false)}
+            />
+            <ConfirmationModal
+                isOpen={isDiscardModalOpen}
+                message="Discard this draft and start over?"
+                onClose={() => setIsDiscardModalOpen(false)}
+                onConfirm={confirmDiscardDraft}
+                confirmText="Proceed"
+                cancelText="Cancel"
             />
             <div className="max-w-4xl mx-auto">
                 <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
@@ -178,8 +281,8 @@ export default function BlogPostForm({
                             </label>
 
                             <div className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-colors ${coverImagePreview
-                                    ? 'border-primary bg-purple-50'
-                                    : 'border-gray-300 hover:border-primary'
+                                ? 'border-primary bg-purple-50'
+                                : 'border-gray-300 hover:border-primary'
                                 }`}>
                                 <input
                                     type="file"
@@ -269,14 +372,14 @@ export default function BlogPostForm({
                                     <button
                                         type="button"
                                         onClick={() => handleFormat('bold')}
-                                        className="p-1.5 text-gray-600 hover:text-primary hover:bg-white rounded transition-colors font-bold"
+                                        className="cursor-pointer p-1.5 text-gray-600 hover:text-primary hover:bg-white rounded transition-colors font-bold"
                                     >
                                         B
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => handleFormat('italic')}
-                                        className="p-1.5 text-gray-600 hover:text-primary hover:bg-white rounded transition-colors italic"
+                                        className="cursor-pointer p-1.5 text-gray-600 hover:text-primary hover:bg-white rounded transition-colors italic"
                                     >
                                         I
                                     </button>
@@ -285,6 +388,7 @@ export default function BlogPostForm({
                                 <div
                                     ref={editorRef}
                                     contentEditable
+                                    onInput={(e) => setContent(e.currentTarget.innerHTML)}
                                     className="block w-full p-4 min-h-75 outline-none"
                                     style={{ whiteSpace: 'pre-wrap' }}
                                 />
@@ -292,26 +396,36 @@ export default function BlogPostForm({
                         </div>
 
                         {/* Buttons */}
-                        <div className="pt-6 border-t border-gray-100 flex items-center justify-end gap-4">
+                        <div className="pt-6 border-t border-gray-100 flex items-center justify-between gap-4">
                             <button
                                 type="button"
-                                onClick={() => handleSubmit('draft')}
-                                disabled={isSubmitting}
-                                className={`px-6 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                                    }`}
+                                onClick={handleDiscardDraft}
+                                className="cursor-pointer px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50"
                             >
-                                {isSubmitting ? 'Saving...' : draftButton}
+                                Discard Draft
                             </button>
 
-                            <button
-                                type="button"
-                                onClick={() => handleSubmit('published')}
-                                disabled={isSubmitting}
-                                className={`px-6 py-2.5 bg-primary border border-transparent rounded-lg text-white font-medium hover:bg-primary-hover shadow-lg shadow-primary/30 transition-all hover:scale-[1.02] ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                                    }`}
-                            >
-                                {isSubmitting ? 'Publishing...' : publishButton}
-                            </button>
+                            <div className="flex items-center gap-4">
+                                <button
+                                    type="button"
+                                    onClick={() => handleSubmit('draft')}
+                                    disabled={isSubmitting}
+                                    className={`cursor-pointer px-6 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                                        }`}
+                                >
+                                    {isSubmitting ? 'Saving...' : draftButton}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => handleSubmit('published')}
+                                    disabled={isSubmitting}
+                                    className={`cursor-pointer px-6 py-2.5 bg-primary border border-transparent rounded-lg text-white font-medium hover:bg-primary-hover shadow-lg shadow-primary/30 transition-all hover:scale-[1.02] ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                                        }`}
+                                >
+                                    {isSubmitting ? 'Publishing...' : publishButton}
+                                </button>
+                            </div>
                         </div>
 
                     </div>
