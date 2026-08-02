@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import PostCard from "../components/blog/PostCard";
+
 import { getAllBlogs, searchBlogs } from "../api/blog.api";
+
+import PostCard from "../components/blog/PostCard";
+import Loader from "../components/common/Loader";
 
 export default function ExploreBlogsPage() {
     const [blogs, setBlogs] = useState([]);
@@ -74,13 +77,20 @@ export default function ExploreBlogsPage() {
                 </p>
             </div>
 
-            {loading && <div className="text-center py-10">Loading blogs...</div>}
+            {loading &&
+                <div className="text-center py-10">
+                    <Loader />
+                </div>
+            }
             {error && <div className="text-center py-10 text-red-500">Error: {error}</div>}
 
             {!loading && !error && (
                 <div className="max-w-7xl mx-auto">
                     {posts.length === 0 ? (
-                        <div className="text-center text-gray-500">No blogs found.</div>
+                        <div className="flex items-center justify-center flex-col">
+                            <img src="public/assets/not-found.svg" alt="No Blogs Found" className="mx-auto mb-4 w-32 h-32" />
+                            <p>No blogs found.</p>
+                        </div>
                     ) : (
                         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
                             {posts.map((post) => (
@@ -93,7 +103,7 @@ export default function ExploreBlogsPage() {
                         <div className="mt-12 flex justify-center">
                             <button
                                 onClick={handleLoadMore}
-                                className="px-6 py-3 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                className="cursor-pointer px-6 py-3 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                             >
                                 Load More
                             </button>

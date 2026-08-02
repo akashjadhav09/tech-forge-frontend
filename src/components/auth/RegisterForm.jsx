@@ -56,7 +56,7 @@ export default function RegisterForm() {
 
             showAlert("Registration and login success", '/home');
         } catch (err) {
-            console.log(err);
+            // console.log(err);
             showAlert(err.response?.data?.message || "Registration failed");
         }
     }
@@ -141,7 +141,7 @@ export default function RegisterForm() {
                     <div>
                         <button
                             type="submit"
-                            className="group relative w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-200"
+                            className="group relative w-full flex justify-center cursor-pointer py-2.5 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-200"
                         >
                             Create Account
                         </button>

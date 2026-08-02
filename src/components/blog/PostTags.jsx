@@ -18,8 +18,8 @@ export default function PostTags({ tags = [], selectedTag, onTagSelect }) {
             <span
                 onClick={() => handleTagClick('All')}
                 className={`inline-block font-medium px-4 py-2 rounded-md cursor-pointer transition-all ${selectedTag === null
-                        ? 'bg-primary text-white shadow-lg scale-105'
-                        : 'bg-gray-200 text-gray-700 hover:bg-primary hover:text-white'
+                    ? 'bg-primary text-white shadow-lg scale-105'
+                    : 'bg-gray-200 text-gray-700 hover:bg-primary hover:text-white'
                     }`}
             >
                 All
@@ -29,11 +29,12 @@ export default function PostTags({ tags = [], selectedTag, onTagSelect }) {
                 <span
                     key={index}
                     onClick={() => handleTagClick(tag)}
-                    className={`inline-block font-medium px-4 py-2 rounded-md cursor-pointer transition-all ${selectedTag === tag
-                            ? 'bg-primary text-white shadow-lg scale-105'
-                            : 'bg-gray-200 text-gray-700 hover:bg-primary hover:text-white'
+                    className={`capitalize inline-block font-medium px-4 py-2 rounded-md cursor-pointer transition-all ${selectedTag === tag
+                        ? 'bg-primary text-white shadow-lg scale-105'
+                        : 'bg-gray-200 text-gray-700 hover:bg-primary hover:text-white'
                         }`}
                 >
+                    {/* {tag.charAt(0).toUpperCase() + tag.slice(1)} */}
                     {tag}
                 </span>
             ))}

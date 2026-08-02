@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import AlertModal from '../components/common/AlertModal';
+import ConfirmationModal from '../components/common/ConfirmationModal';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getMyBlogs, deleteBlog, updateBlog } from '../api/blog.api';
@@ -15,6 +16,9 @@ export default function MyBlogsPage() {
 
     const [alertMessage, setAlertMessage] = useState('');
     const [alertOpen, setAlertOpen] = useState(false);
+
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [pendingDeleteId, setPendingDeleteId] = useState(null);
 
     const showAlert = (msg) => {
         setAlertMessage(msg);
@@ -44,18 +48,22 @@ export default function MyBlogsPage() {
         }
     };
 
-    const handleDelete = async (blogId) => {
-        if (!window.confirm('Are you sure you want to delete this blog?')) {
-            return;
-        }
+    const handleDelete = (blogId) => {
+        setPendingDeleteId(blogId);
+        setDeleteConfirmOpen(true);
+    };
 
+    const confirmDelete = async () => {
+        setDeleteConfirmOpen(false);
         try {
-            await deleteBlog(blogId);
+            await deleteBlog(pendingDeleteId);
             // Remove from local state
-            setBlogs(prev => prev.filter(blog => blog.blogId !== blogId));
+            setBlogs(prev => prev.filter(blog => blog.blogId !== pendingDeleteId));
         } catch (err) {
             console.error('Error deleting blog:', err);
             showAlert(err.response?.data?.message || 'Failed to delete blog');
+        } finally {
+            setPendingDeleteId(null);
         }
     };
 
@@ -101,7 +109,7 @@ export default function MyBlogsPage() {
                         <p className="text-red-500">{error}</p>
                         <button
                             onClick={fetchMyBlogs}
-                            className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                            className="cursor-pointer mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                         >
                             Try Again
                         </button>
@@ -118,6 +126,17 @@ export default function MyBlogsPage() {
                 message={alertMessage}
                 onClose={() => setAlertOpen(false)}
             />
+            <ConfirmationModal
+                isOpen={deleteConfirmOpen}
+                message="Are you sure you want to delete this blog?"
+                confirmText="Delete"
+                cancelText="Cancel"
+                onConfirm={confirmDelete}
+                onClose={() => {
+                    setDeleteConfirmOpen(false);
+                    setPendingDeleteId(null);
+                }}
+            />
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="mb-12">
@@ -132,7 +151,7 @@ export default function MyBlogsPage() {
                         </div>
                         <button
                             onClick={() => navigate('/writeablog')}
-                            className="px-6 py-3 bg-primary text-white font-semibold rounded-lg shadow-lg hover:bg-primary-hover transition-all duration-300 hover:-translate-y-0.5"
+                            className="cursor-pointer px-6 py-3 bg-primary text-white font-semibold rounded-lg shadow-lg hover:bg-primary-hover transition-all duration-300 hover:-translate-y-0.5"
                         >
                             + Write New Blog
                         </button>
@@ -198,7 +217,7 @@ export default function MyBlogsPage() {
                         <p className="text-gray-500 mb-6">Start writing your first blog post!</p>
                         <button
                             onClick={() => navigate('/writeablog')}
-                            className="px-8 py-3 bg-primary text-white font-semibold rounded-lg shadow-lg hover:bg-primary-hover transition-all duration-300"
+                            className="cursor-pointer px-8 py-3 bg-primary text-white font-semibold rounded-lg shadow-lg hover:bg-primary-hover transition-all duration-300"
                         >
                             Write Your First Blog
                         </button>
@@ -234,7 +253,7 @@ export default function MyBlogsPage() {
                                     <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
                                         <button
                                             onClick={() => handleEdit(blog.blogId)}
-                                            className="p-2 bg-white rounded-full shadow-lg hover:bg-blue-50 transition-colors"
+                                            className="cursor-pointer p-2 bg-white rounded-full shadow-lg hover:bg-blue-50 transition-colors"
                                             title="Edit"
                                         >
                                             <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -243,7 +262,7 @@ export default function MyBlogsPage() {
                                         </button>
                                         <button
                                             onClick={() => handleDelete(blog.blogId)}
-                                            className="p-2 bg-white rounded-full shadow-lg hover:bg-red-50 transition-colors"
+                                            className="cursor-pointer p-2 bg-white rounded-full shadow-lg hover:bg-red-50 transition-colors"
                                             title="Delete"
                                         >
                                             <svg className="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -254,11 +273,11 @@ export default function MyBlogsPage() {
 
                                     {/* Publish button — bottom right, only on Draft, only on hover */}
                                     {isDraft && (
-                                        <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+                                        <div className="cursor-pointer absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
                                             <button
                                                 onClick={() => handlePublish(blog.blogId)}
                                                 title="Publish this blog"
-                                                className="flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-full shadow-lg transition-all duration-200 hover:scale-105"
+                                                className="cursor-pointer flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-full shadow-lg transition-all duration-200 hover:scale-105"
                                             >
                                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

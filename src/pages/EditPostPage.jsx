@@ -1,7 +1,10 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+
 import { getBlogById, updateBlog } from '../api/blog.api';
+
 import BlogPostForm from '../components/blog/BlogPostForm';
+import Loader from '../components/common/Loader';
 
 export default function EditPostPage() {
     const { id } = useParams();
@@ -54,7 +57,9 @@ export default function EditPostPage() {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="animate-pulse text-gray-500 text-lg">Loading blog...</div>
+                <div className="text-center py-10">
+                    <Loader />
+                </div>
             </div>
         );
     }
@@ -66,7 +71,7 @@ export default function EditPostPage() {
                     <p className="text-red-600 font-semibold text-lg">{error}</p>
                     <button
                         onClick={() => navigate('/my-blogs')}
-                        className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                        className="cursor-pointer mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                     >
                         Back to My Blogs
                     </button>
@@ -78,7 +83,10 @@ export default function EditPostPage() {
     if (!post) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <p className="text-gray-500 text-lg">Blog not found.</p>
+                <div>
+                    <img src="public/assets/not-found.svg" alt="No Blogs Found" className="mx-auto mb-4 w-32 h-32" />
+                    <p>No blogs found.</p>
+                </div>
             </div>
         );
     }

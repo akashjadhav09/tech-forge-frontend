@@ -1,23 +1,9 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getProfile } from '../api/auth.api';
 import { useNavigate } from 'react-router-dom';
+import { registerAuthSyncListener, registerVisibilityAuthCheck } from '../utils/authSync';
 
 const AuthContext = createContext(null);
-
-// One-time migration: move old snake_case keys → camelCase keys
-// const migrateTokenKeys = () => {
-//     const oldAccess = localStorage.getItem("access_token");
-//     const oldRefresh = localStorage.getItem("refresh_token");
-
-//     if (oldAccess) {
-//         localStorage.setItem("accessToken", oldAccess);
-//         localStorage.removeItem("access_token");
-//     }
-//     if (oldRefresh) {
-//         localStorage.setItem("refreshToken", oldRefresh);
-//         localStorage.removeItem("refresh_token");
-//     }
-// };
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
@@ -46,7 +32,32 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         // migrateTokenKeys(); // run migration before fetchUser
         fetchUser();
+
+        // Listen for logout events triggered in other browser tabs.
+        // When another tab removes the auth tokens from localStorage,
+        // the `storage` event fires here and we call logout() to clear
+        // local state and redirect to /login.
+        const cleanup = registerAuthSyncListener(() => {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            setUser(null);
+            navigate('/login');
+        });
+
+        return cleanup; // deregister listener on unmount
     }, []);
+
+    // Safety net: when the user switches back to this tab, verify the token
+    // is still present. The `storage` event fires in real-time but React
+    // Router's navigate() may not execute reliably in background tabs.
+    // This guarantees an immediate redirect as soon as the tab is focused.
+    useEffect(() => {
+        const cleanup = registerVisibilityAuthCheck(() => {
+            setUser(null);
+            navigate('/login');
+        });
+        return cleanup;
+    }, [navigate]);
 
     const login = async (responseData) => {
         const accessToken = responseData?.data.accessToken;
