@@ -173,26 +173,6 @@ export default function ProfilePage() {
                             Sign Out
                         </button>
                     </div>
-
-                    {/* Stats Grid */}
-                    {/* <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mt-10 border-t border-gray-100 pt-8">
-                        <div className="text-center p-4 bg-gray-50 rounded-xl">
-                            <span className="block text-2xl font-bold text-gray-900">{blogCount}</span>
-                            <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Blogs Published</span>
-                        </div>
-                        <div className="text-center p-4 bg-gray-50 rounded-xl">
-                            <span className="block text-2xl font-bold text-gray-900">0</span>
-                            <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Comments</span>
-                        </div>
-                        <div className="text-center p-4 bg-gray-50 rounded-xl">
-                            <span className="block text-2xl font-bold text-gray-900">
-                                {user?.data?.createdAt
-                                    ? new Date(user.data.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-                                    : 'Recently'}
-                            </span>
-                            <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Member Since</span>
-                        </div>
-                    </div> */}
                 </div>
             </div>
         </div>
