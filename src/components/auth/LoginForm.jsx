@@ -2,30 +2,13 @@ import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { loginUser } from '../../api/auth.api';
 import { useAuth } from '../../contexts/AuthContext';
-import AlertModal from '../common/AlertModal';
+import { useToast } from '../../contexts/ToastContext';
 
 export default function LoginForm() {
 
     const navigate = useNavigate();
     const { login } = useAuth();
-
-    const [alertMessage, setAlertMessage] = useState('');
-    const [alertOpen, setAlertOpen] = useState(false);
-    const pendingNav = useRef(null);
-
-    const showAlert = (msg, navigateTo = null) => {
-        pendingNav.current = navigateTo;
-        setAlertMessage(msg);
-        setAlertOpen(true);
-    };
-
-    const handleClose = () => {
-        setAlertOpen(false);
-        if (pendingNav.current) {
-            navigate(pendingNav.current);
-            pendingNav.current = null;
-        }
-    };
+    const toast = useToast();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -35,32 +18,22 @@ export default function LoginForm() {
             const password = e.target.password.value;
 
             if (!email || !password) {
-                showAlert("Please fill all fields");
+                toast.warning('Missing fields', 'Please fill all fields.');
                 return;
             }
 
-            const res = await loginUser({
-                email: email,
-                password: password,
-            });
-
-            // Use context login to update global state (stores access_token + refresh_token)
+            const res = await loginUser({ email, password });
             await login(res.data);
 
-            showAlert("Login success", '/home');
+            toast.success('Welcome back!', 'You have logged in successfully.');
+            navigate('/home');
         } catch (err) {
-            // console.log(err);
-            showAlert(err.response?.data?.message || "Login failed");
+            toast.error('Login failed', err.response?.data?.message || 'Invalid email or password.');
         }
-    }
+    };
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <AlertModal
-                isOpen={alertOpen}
-                message={alertMessage}
-                onClose={handleClose}
-            />
 
             <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg border border-gray-100">
                 <div className="text-center">

@@ -1,29 +1,22 @@
 import { useState, useEffect } from 'react';
-import AlertModal from '../components/common/AlertModal';
 import ConfirmationModal from '../components/common/ConfirmationModal';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { getMyBlogs, deleteBlog, updateBlog } from '../api/blog.api';
 import PostCard from '../components/blog/PostCard';
 
 export default function MyBlogsPage() {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const toast = useToast();
 
     const [blogs, setBlogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const [alertMessage, setAlertMessage] = useState('');
-    const [alertOpen, setAlertOpen] = useState(false);
-
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [pendingDeleteId, setPendingDeleteId] = useState(null);
-
-    const showAlert = (msg) => {
-        setAlertMessage(msg);
-        setAlertOpen(true);
-    };
 
     useEffect(() => {
         if (!user) {
@@ -57,11 +50,11 @@ export default function MyBlogsPage() {
         setDeleteConfirmOpen(false);
         try {
             await deleteBlog(pendingDeleteId);
-            // Remove from local state
             setBlogs(prev => prev.filter(blog => blog.blogId !== pendingDeleteId));
+            toast.success('Blog deleted', 'Your blog post has been permanently deleted.');
         } catch (err) {
             console.error('Error deleting blog:', err);
-            showAlert(err.response?.data?.message || 'Failed to delete blog');
+            toast.error('Delete failed', err.response?.data?.message || 'Failed to delete blog');
         } finally {
             setPendingDeleteId(null);
         }
@@ -74,15 +67,15 @@ export default function MyBlogsPage() {
     const handlePublish = async (blogId) => {
         try {
             await updateBlog(blogId, { status: 'Published' });
-            // Update local state so UI reflects instantly
             setBlogs(prev =>
                 prev.map(blog =>
                     blog.blogId === blogId ? { ...blog, status: 'Published' } : blog
                 )
             );
+            toast.success('Blog published!', 'Your blog post is now live for everyone to read.');
         } catch (err) {
             console.error('Error publishing blog:', err);
-            showAlert(err.response?.data?.message || 'Failed to publish blog');
+            toast.error('Publish failed', err.response?.data?.message || 'Failed to publish blog');
         }
     };
 
@@ -121,11 +114,6 @@ export default function MyBlogsPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <AlertModal
-                isOpen={alertOpen}
-                message={alertMessage}
-                onClose={() => setAlertOpen(false)}
-            />
             <ConfirmationModal
                 isOpen={deleteConfirmOpen}
                 message="Are you sure you want to delete this blog?"

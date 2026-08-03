@@ -2,6 +2,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
 import { getBlogById, updateBlog } from '../api/blog.api';
+import { useToast } from '../contexts/ToastContext';
 
 import BlogPostForm from '../components/blog/BlogPostForm';
 import Loader from '../components/common/Loader';
@@ -12,6 +13,7 @@ export default function EditPostPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+    const toast = useToast();
 
     useEffect(() => {
         if (!id) {
@@ -50,8 +52,19 @@ export default function EditPostPage() {
     }, [id]);
 
     const handleUpdate = async (data) => {
-        await updateBlog(id, data);
-        navigate('/my-blogs');
+        try {
+            await updateBlog(id, data);
+            const isDraft = data.status === 'Draft';
+            if (isDraft) {
+                toast.info('Draft updated', 'Your changes have been saved as a draft.');
+            } else {
+                toast.success('Blog updated!', 'Your post has been updated and published.');
+            }
+            navigate('/my-blogs');
+        } catch (error) {
+            console.error('Update blog failed:', error);
+            toast.error('Update failed', error?.response?.data?.message || 'Please try again.');
+        }
     };
 
     if (loading) {

@@ -2,14 +2,21 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../../contexts/ToastContext";
 import SearchWithDropdown from "../common/SearchWithDropdown";
 
 export default function Navbar() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const toast = useToast();
     const isActive = (path) => {
         return location.pathname === path ? "text-primary font-semibold" : "text-gray-500 hover:text-primary";
+    };
+
+    const handleLogout = () => {
+        toast.info('Signed out', 'You have been signed out successfully.');
+        logout();
     };
 
     const handleExploreClick = (e) => {
@@ -169,7 +176,7 @@ export default function Navbar() {
                                         </Link>
                                         <div className="border-t border-gray-50 mt-1">
                                             <button
-                                                onClick={logout}
+                                                onClick={handleLogout}
                                                 className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                                             >
                                                 Sign out
@@ -261,7 +268,7 @@ export default function Navbar() {
                                         Profile Settings
                                     </Link>
                                     <button
-                                        onClick={logout}
+                                        onClick={handleLogout}
                                         className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50"
                                     >
                                         Sign out

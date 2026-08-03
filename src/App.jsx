@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import MainLayout from "./components/layout/MainLayout";
+import { ToastProvider } from "./contexts/ToastContext";
 
 import LoginForm from "./components/auth/LoginForm";
 import RegisterForm from "./components/auth/RegisterForm";
@@ -18,6 +19,7 @@ import ProfilePage from "./pages/ProfilePage";
 function App() {
   return (
     <div className="">
+      <ToastProvider>
       <AuthProvider>
         <Routes>
           <Route element={<MainLayout />}>
@@ -36,6 +38,7 @@ function App() {
           <Route path="/register" element={<RegisterForm />} />
         </Routes>
       </AuthProvider>
+      </ToastProvider>
     </div>
   )
 }
