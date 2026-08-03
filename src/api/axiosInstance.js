@@ -71,10 +71,20 @@ axiosInstance.interceptors.response.use(
                     refreshToken: refreshToken,
                 });
 
+                // The API wraps tokens in data.data (envelope pattern).
+                // Fall back to the root data object for non-enveloped responses.
+                const payload = data?.data ?? data;
+
                 // Support both camelCase and snake_case response shapes
-                const newAccessToken = data.accessToken ?? data.access_token;
+                const newAccessToken = payload?.accessToken ?? payload?.access_token;
+                const newRefreshToken = payload?.refreshToken ?? payload?.refresh_token;
+
+                // Guard: if the token is still missing, treat it as a failed refresh
+                if (!newAccessToken || newAccessToken === "undefined") {
+                    throw new Error("Refresh response did not contain a valid access token");
+                }
+
                 localStorage.setItem("accessToken", newAccessToken);
-                const newRefreshToken = data.refreshToken ?? data.refresh_token;
                 if (newRefreshToken) {
                     localStorage.setItem("refreshToken", newRefreshToken);
                 }

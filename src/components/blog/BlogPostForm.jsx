@@ -34,6 +34,10 @@ export default function BlogPostForm({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
 
+    const hasContent = Boolean(
+        title.trim() || tags.trim() || content.trim() || coverImageUrl
+    );
+
     const [alertMessage, setAlertMessage] = useState('');
     const [alertOpen, setAlertOpen] = useState(false);
 
@@ -398,12 +402,13 @@ export default function BlogPostForm({
                         {/* Buttons */}
                         <div className="pt-6 border-t border-gray-100 flex items-center justify-between gap-4">
                             <button
-                                type="button"
-                                onClick={handleDiscardDraft}
-                                className="cursor-pointer px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50"
-                            >
-                                Discard Draft
-                            </button>
+                                    type="button"
+                                    onClick={handleDiscardDraft}
+                                    disabled={!hasContent}
+                                    className={`px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium transition-colors ${!hasContent ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50'}`}
+                                >
+                                    Discard Draft
+                                </button>
 
                             <div className="flex items-center gap-4">
                                 <button
